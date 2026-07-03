@@ -37,3 +37,11 @@ class CloudinaryUploadError(MediaUploadError):
     """Raised when the upload to Cloudinary fails."""
     def __init__(self, message: str):
         super().__init__(message, status_code=500)
+
+
+class InvalidMimeTypeError(MediaUploadError):
+    """Raised when the file has an unsupported MIME type."""
+    def __init__(self, mime_type: str, allowed_mime_types: list[str] | set[str]):
+        message = f"Unsupported MIME type '{mime_type}'. Allowed types: {', '.join(allowed_mime_types)}"
+        super().__init__(message, status_code=400)
+

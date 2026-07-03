@@ -40,7 +40,14 @@ def create_app(config_class=Config) -> Flask:
         app.mongo_client = None
         app.db = None
 
-    # 2. Register Blueprints
+    # 2. Register request ID generator
+    import uuid
+    from flask import g, request
+    @app.before_request
+    def add_request_id():
+        g.request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+
+    # 3. Register Blueprints
     logger.info("Registering media routes blueprint...")
     app.register_blueprint(media_bp)
     

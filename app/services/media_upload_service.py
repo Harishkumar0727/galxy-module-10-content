@@ -1,10 +1,14 @@
 import logging
+import time
+from flask import g, has_request_context
+from werkzeug.utils import secure_filename
 from app.config.config import Config
 from app.utils.cloudinary_helper import upload_image, delete_image
 from app.utils.exceptions import (
     MissingFileError,
     InvalidFolderError,
     InvalidExtensionError,
+    InvalidMimeTypeError,
     FileSizeExceededError,
     CloudinaryUploadError
 )
@@ -13,7 +17,13 @@ from app.utils.exceptions import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def upload_to_folder(file, folder_name: str) -> dict:
+def get_request_id() -> str:
+    """Helper to safely retrieve the current Flask request ID."""
+    if has_request_context() and hasattr(g, "request_id"):
+        return g.request_id
+    return "SYSTEM"
+
+def upload_to_folder(file, folder_name: str) -> str:
     """
     Validates the uploaded file and destination folder, then uploads the file to Cloudinary.
     
@@ -22,37 +32,51 @@ def upload_to_folder(file, folder_name: str) -> dict:
         folder_name: The destination folder whitelisted in Config.
         
     Returns:
-        dict: A dictionary containing 'url' and 'public_id' of the uploaded asset.
+        str: The secure Cloudinary URL as a plain string.
         
     Raises:
         MissingFileError: If the file is not provided or empty.
         InvalidFolderError: If the folder name is not in the whitelist.
         InvalidExtensionError: If the file extension is not allowed.
+        InvalidMimeTypeError: If the file MIME type is not allowed.
         FileSizeExceededError: If the file size exceeds the maximum limit (5MB).
-        CloudinaryUploadError: If the upload operation to Cloudinary fails.
+        CloudinaryUploadError: If the upload operation to Cloudinary fails after retries.
     """
     # 1. Validate file existence
     if file is None or not getattr(file, "filename", ""):
-        logger.error("Upload attempt failed: File object is missing or has an empty filename.")
+        logger.error(f"[{get_request_id()}] Upload attempt failed: File object is missing or has an empty filename.")
         raise MissingFileError()
         
-    filename = file.filename
-    logger.info(f"Received upload request for file '{filename}' into folder '{folder_name}'.")
+    original_filename = file.filename
+    
+    # Sanitize uploaded filename
+    filename = secure_filename(original_filename)
+    if not filename:
+        ext = original_filename.rsplit(".", 1)[1].lower() if "." in original_filename else ""
+        filename = f"file_{int(time.time())}.{ext}" if ext else f"file_{int(time.time())}"
+
+    logger.info(f"[{get_request_id()}] Received upload request for file '{original_filename}' (sanitized: '{filename}') into folder '{folder_name}'.")
 
     # 2. Validate folder name against whitelist
     if folder_name not in Config.VALID_FOLDERS:
-        logger.error(f"Upload attempt failed: Folder '{folder_name}' is not in the whitelist.")
+        logger.error(f"[{get_request_id()}] Upload attempt failed: Folder '{folder_name}' is not in the whitelist.")
         raise InvalidFolderError(folder_name, Config.VALID_FOLDERS)
 
     # 3. Validate file extension
     if "." not in filename:
-        logger.error(f"Upload attempt failed: Filename '{filename}' does not contain an extension.")
+        logger.error(f"[{get_request_id()}] Upload attempt failed: Filename '{filename}' does not contain an extension.")
         raise InvalidExtensionError("", Config.ALLOWED_FORMATS)
         
     ext = filename.rsplit(".", 1)[1].lower()
     if ext not in Config.ALLOWED_FORMATS:
-        logger.error(f"Upload attempt failed: Extension '{ext}' is not supported.")
+        logger.error(f"[{get_request_id()}] Upload attempt failed: Extension '{ext}' is not supported.")
         raise InvalidExtensionError(ext, Config.ALLOWED_FORMATS)
+
+    # Validate MIME type
+    content_type = getattr(file, "content_type", "")
+    if not content_type or content_type not in Config.ALLOWED_MIME_TYPES:
+        logger.error(f"[{get_request_id()}] Upload attempt failed: MIME type '{content_type}' is not supported.")
+        raise InvalidMimeTypeError(content_type, Config.ALLOWED_MIME_TYPES)
 
     # 4. Validate file size
     try:
@@ -61,26 +85,39 @@ def upload_to_folder(file, folder_name: str) -> dict:
         size_bytes = file.tell()
         file.seek(0)
     except Exception as e:
-        logger.error(f"Failed to read file size: {e}")
+        logger.error(f"[{get_request_id()}] Failed to read file size: {e}")
         raise MissingFileError("Could not read the uploaded file stream.")
 
     if size_bytes > Config.MAX_FILE_SIZE_BYTES:
         size_mb = size_bytes / (1024 * 1024)
-        logger.error(f"Upload attempt failed: File size ({size_mb:.2f} MB) exceeds limit of {Config.MAX_FILE_SIZE_MB} MB.")
+        logger.error(f"[{get_request_id()}] Upload attempt failed: File size ({size_mb:.2f} MB) exceeds limit of {Config.MAX_FILE_SIZE_MB} MB.")
         raise FileSizeExceededError(size_mb, Config.MAX_FILE_SIZE_MB)
 
-    # 5. Call Cloudinary Helper to upload the image
-    try:
-        logger.info(f"File validation succeeded. Uploading '{filename}' to Cloudinary...")
-        upload_details = upload_image(file, folder=folder_name)
-        logger.info(f"Upload successful. URL: {upload_details['url']}, Public ID: {upload_details['public_id']}")
-        return {
-            "url": upload_details["url"],
-            "public_id": upload_details["public_id"]
-        }
-    except Exception as e:
-        logger.error(f"Cloudinary upload failed: {str(e)}")
-        raise CloudinaryUploadError(f"Cloudinary upload service failed: {str(e)}")
+    # 5. Call Cloudinary Helper to upload the image with retry logic
+    max_retries = 3
+    upload_details = None
+    last_exception = None
+
+    for attempt in range(max_retries + 1):
+        try:
+            # Always reset file pointer before each upload attempt
+            file.seek(0)
+            logger.info(f"[{get_request_id()}] Uploading '{filename}' to Cloudinary (attempt {attempt + 1}/{max_retries + 1})...")
+            upload_details = upload_image(file, folder=folder_name)
+            break
+        except Exception as e:
+            last_exception = e
+            if attempt < max_retries:
+                logger.warning(f"[{get_request_id()}] Cloudinary upload attempt {attempt + 1} failed: {e}. Retrying in 1s...")
+                time.sleep(1)
+            else:
+                logger.error(f"[{get_request_id()}] Cloudinary upload failed after {max_retries + 1} attempts: {e}")
+
+    if not upload_details:
+        raise CloudinaryUploadError(f"Cloudinary upload service failed after {max_retries + 1} attempts. Error: {last_exception}")
+
+    logger.info(f"[{get_request_id()}] Upload successful. URL: {upload_details['url']}, Public ID: {upload_details['public_id']}")
+    return upload_details["url"]
 
 
 def delete_from_cloudinary(public_id: str) -> bool:

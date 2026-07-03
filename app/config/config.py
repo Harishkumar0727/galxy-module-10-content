@@ -32,6 +32,7 @@ class Config:
     }
     
     ALLOWED_FORMATS: set[str] = {"jpg", "jpeg", "png", "webp"}
+    ALLOWED_MIME_TYPES: set[str] = {"image/jpeg", "image/png", "image/webp"}
     
     MAX_FILE_SIZE_MB: int = 5
     MAX_FILE_SIZE_BYTES: int = MAX_FILE_SIZE_MB * 1024 * 1024  # 5 MB
