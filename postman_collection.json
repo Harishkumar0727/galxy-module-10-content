@@ -1,0 +1,286 @@
+{
+	"info": {
+		"_postman_id": "7d4b29c9-598d-4a18-bb56-91e63a1fa0fb",
+		"name": "GALXY - Module 10 Shared Media Upload",
+		"description": "Postman collection for testing the GALXY Shared Media Upload Utility (Module 10). Contains success and error test cases for local verification.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Upload Media - Success (General Folder)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer admin-token-xyz",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "",
+							"description": "Select an image (jpg, jpeg, png, webp) smaller than 5 MB"
+						},
+						{
+							"key": "folder",
+							"value": "galxy/general",
+							"type": "text",
+							"description": "Optional: target folder (must be in whitelist)"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/admin/media/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"admin",
+						"media",
+						"upload"
+					]
+				},
+				"description": "Successfully uploads a valid image to the whitelisted 'galxy/general' folder. Requires Authorization: Bearer admin-token-xyz header."
+			},
+			"response": []
+		},
+		{
+			"name": "Upload Media - Success (Products Folder)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer admin-token-xyz",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "",
+							"description": "Select an image (jpg, jpeg, png, webp) smaller than 5 MB"
+						},
+						{
+							"key": "folder",
+							"value": "galxy/products",
+							"type": "text",
+							"description": "Optional: target folder (must be in whitelist)"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/admin/media/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"admin",
+						"media",
+						"upload"
+					]
+				},
+				"description": "Successfully uploads a valid image to the whitelisted 'galxy/products' folder. Requires Authorization: Bearer admin-token-xyz header."
+			},
+			"response": []
+		},
+		{
+			"name": "Upload Media - Failure (401 Unauthorized)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer invalid-token",
+						"type": "text",
+						"description": "Incorrect token"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": ""
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/admin/media/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"admin",
+						"media",
+						"upload"
+					]
+				},
+				"description": "Fails with 401 Unauthorized when administrative credentials are not provided or invalid."
+			},
+			"response": []
+		},
+		{
+			"name": "Upload Media - Failure (400 Invalid Folder)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer admin-token-xyz",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": ""
+						},
+						{
+							"key": "folder",
+							"value": "galxy/unauthorized-folder-path",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/admin/media/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"admin",
+						"media",
+						"upload"
+					]
+				},
+				"description": "Fails with 400 Bad Request when the target folder name is not in the allowed whitelist."
+			},
+			"response": []
+		},
+		{
+			"name": "Upload Media - Failure (400 Unsupported Extension)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer admin-token-xyz",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "",
+							"description": "Upload a zip, exe, or html file"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/admin/media/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"admin",
+						"media",
+						"upload"
+					]
+				},
+				"description": "Fails with 400 Bad Request when the file has an unsupported format (e.g. zip, exe, js, html, svg)."
+			},
+			"response": []
+		},
+		{
+			"name": "Upload Media - Failure (413 File Too Large)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer admin-token-xyz",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "",
+							"description": "Upload any file > 5 MB"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/admin/media/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"admin",
+						"media",
+						"upload"
+					]
+				},
+				"description": "Fails with 413 Payload Too Large when the file size exceeds the 5 MB limit."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
