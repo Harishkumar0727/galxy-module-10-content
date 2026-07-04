@@ -61,7 +61,7 @@ export default function AboutSection({ about }: AboutSectionProps) {
           transform: 'translateY(30px)',
           transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
-          <h2 style={{
+          <h1 style={{
             fontFamily: 'var(--font-display)',
             fontSize: 'clamp(2rem, 4vw, 3rem)',
             fontWeight: 700,
@@ -72,7 +72,8 @@ export default function AboutSection({ about }: AboutSectionProps) {
             WebkitTextFillColor: 'transparent',
           }}>
             {about.title}
-          </h2>
+          </h1>
+
           
           <div style={{
             color: 'var(--text-secondary)',

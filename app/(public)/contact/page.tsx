@@ -1,13 +1,7 @@
 import React from 'react';
-import { Metadata } from 'next';
 import { getSection } from '@/lib/api/site-content';
 import { ContactContent } from '@/lib/types/site-content';
 import ContactSection from '@/components/site-content/ContactSection';
-
-export const metadata: Metadata = {
-  title: 'Contact GALXY | Custom Lighting & Craft Studio',
-  description: 'Get in touch with GALXY Studio for custom neon lighting projects, quotes, or queries.',
-};
 
 export default async function ContactPage() {
   let contact: ContactContent | null = null;
@@ -57,7 +51,7 @@ export default async function ContactPage() {
           fontFamily: 'var(--font-display)',
           fontSize: '1.25rem'
         }}>
-          Connecting to GALXY Studio API...
+          Content Unavailable
         </div>
       )}
     </div>
