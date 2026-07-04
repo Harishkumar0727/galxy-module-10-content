@@ -317,10 +317,10 @@ def test_admin_put_invalid_schema(client, admin_token):
     assert "errors" in data
     assert "background_image_url" in data["errors"]
 
-def test_cors_wildcard_default(client):
+def test_cors_default_config_disallowed(client):
     headers = {"Origin": "http://evil-site.com"}
     response = client.get('/api/site-content/hero', headers=headers)
-    assert response.headers.get('Access-Control-Allow-Origin') == '*'
+    assert 'Access-Control-Allow-Origin' not in response.headers
 
 def test_cors_allow_list(client, app):
     app.config['CORS_ALLOWED_ORIGINS'] = 'https://galxystudio.com, https://admin.galxystudio.com'
@@ -335,3 +335,9 @@ def test_cors_allow_list(client, app):
     headers_disallowed = {"Origin": "http://evil-site.com"}
     response = client.get('/api/site-content/hero', headers=headers_disallowed)
     assert 'Access-Control-Allow-Origin' not in response.headers
+
+    # Explicit wildcard config
+    app.config['CORS_ALLOWED_ORIGINS'] = '*'
+    headers_wildcard = {"Origin": "http://evil-site.com"}
+    response_wc = client.get('/api/site-content/hero', headers=headers_wildcard)
+    assert response_wc.headers.get('Access-Control-Allow-Origin') == '*'

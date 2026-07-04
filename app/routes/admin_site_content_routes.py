@@ -4,15 +4,14 @@ import logging
 from app.services import site_content_service
 import os
 
-# Try importing from the shared Module 1 authentication first.
-# If Module 1 is not present, fall back to the local development mock auth stub.
-try:
+# Under non-development environments, strictly import from Module 1 (hard fail to let integration crash on missing real auth)
+if os.environ.get("FLASK_ENV", "development").lower() != "development":
     from app.middleware.auth import require_admin
-except ImportError:
-    import sys
-    if os.environ.get("FLASK_ENV") != "development":
-        sys.stderr.write("WARNING: Module 1 auth not found. Falling back to development mock auth stub in a non-development environment!\n")
-    from app.utils._dev_auth_stub import require_admin
+else:
+    try:
+        from app.middleware.auth import require_admin
+    except ImportError:
+        from app.utils._dev_auth_stub import require_admin
 
 from app.utils.content_schema_validator import validate_content, SECTION_ENUM
 

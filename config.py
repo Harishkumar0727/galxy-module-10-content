@@ -22,4 +22,4 @@ class Config:
     JWT_SECRET = os.environ.get('JWT_SECRET', 'super_secret_jwt_key_for_galxy_cms')
 
     # CORS Configuration
-    CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '*')
+    CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')

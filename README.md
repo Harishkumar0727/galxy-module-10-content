@@ -56,8 +56,8 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 # JWT secret (from Module 1 for admin authentication verification)
 JWT_SECRET=your_jwt_secret_key_here
 
-# CORS Configuration origin list (defaults to * if unset)
-CORS_ALLOWED_ORIGINS=*
+# CORS Configuration origin list
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ```
 
 *Note: Make sure your public outbound IP is whitelisted on the MongoDB Atlas Console (or configured to allow access from anywhere `0.0.0.0/0` during development).*
