@@ -13,7 +13,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer admin-token-xyz",
+						"value": "Bearer {{admin_jwt}}",
 						"type": "text"
 					}
 				],
@@ -48,7 +48,7 @@
 						"upload"
 					]
 				},
-				"description": "Successfully uploads a valid image to the whitelisted 'galxy/general' folder. Requires Authorization: Bearer admin-token-xyz header."
+				"description": "Successfully uploads a valid image to the whitelisted 'galxy/general' folder. Requires Authorization: Bearer {{admin_jwt}} header."
 			},
 			"response": []
 		},
@@ -59,7 +59,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer admin-token-xyz",
+						"value": "Bearer {{admin_jwt}}",
 						"type": "text"
 					}
 				],
@@ -94,7 +94,7 @@
 						"upload"
 					]
 				},
-				"description": "Successfully uploads a valid image to the whitelisted 'galxy/products' folder. Requires Authorization: Bearer admin-token-xyz header."
+				"description": "Successfully uploads a valid image to the whitelisted 'galxy/products' folder. Requires Authorization: Bearer {{admin_jwt}} header."
 			},
 			"response": []
 		},
@@ -145,7 +145,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer admin-token-xyz",
+						"value": "Bearer {{admin_jwt}}",
 						"type": "text"
 					}
 				],
@@ -189,7 +189,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer admin-token-xyz",
+						"value": "Bearer {{admin_jwt}}",
 						"type": "text"
 					}
 				],
@@ -229,7 +229,7 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer admin-token-xyz",
+						"value": "Bearer {{admin_jwt}}",
 						"type": "text"
 					}
 				],

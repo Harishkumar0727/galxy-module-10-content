@@ -15,7 +15,6 @@ The utility coordinates request-validation policies (checking file presence, fol
 backend sharemedia/
 │
 ├── app/
-│   ├── __init__.py
 │   ├── app.py                     # Flask application factory and exception handlers
 │   │
 │   ├── config/
@@ -36,7 +35,7 @@ backend sharemedia/
 │
 ├── tests/
 │   ├── conftest.py                # Pytest fixtures and mock configurations
-│   └── test_media_upload.py       # Automated suite (11 standard test cases)
+│   └── test_media_upload.py       # Automated suite (15 standard test cases)
 │
 ├── .env.example                   # Local configuration template
 ├── .gitignore                     # Git ignore file
@@ -115,10 +114,7 @@ By default, the server runs on `http://localhost:5000`.
 ## 6. API Endpoint Documentation
 
 ### Route Details
-* **Endpoint**: `/api/admin/media/upload`
-* **Method**: `POST`
-* **Content-Type**: `multipart/form-data`
-* **Authentication**: Requires admin credentials (verified via `Authorization: Bearer admin-token-xyz` or `X-Admin-Token: admin-secret`).
+* **Authentication**: Authentication is handled by Module 1 (Auth) using the shared `@require_admin` middleware. Access is gated by a valid JWT token signed with the system's `SECRET_KEY` and containing an admin claim.
 
 ### Request Form Parameters
 | Parameter | Type | Required | Description |
@@ -143,7 +139,7 @@ Only the following folders are permitted destination paths:
 Using curl:
 ```bash
 curl -X POST http://localhost:5000/api/admin/media/upload \
-  -H "Authorization: Bearer admin-token-xyz" \
+  -H "Authorization: Bearer <valid_admin_jwt>" \
   -F "file=@/path/to/my_image.png" \
   -F "folder=galxy/products"
 ```

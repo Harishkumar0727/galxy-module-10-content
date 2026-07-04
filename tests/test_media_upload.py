@@ -3,7 +3,6 @@ import pytest
 import socket
 from unittest.mock import patch, MagicMock
 from app.config.config import Config
-from app.utils.exceptions import InvalidMimeTypeError, FileSizeExceededError
 
 # A valid 1x1 pixel PNG image bytes to pass Pillow verification
 VALID_PNG_BYTES = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc```\x00\x00\x00\x04\x00\x01\xf6\x178U\x00\x00\x00\x00IEND\xaeB`\x82'
@@ -38,8 +37,8 @@ def test_upload_success(mock_upload, client, admin_headers):
     mock_upload.assert_called_once()
 
 @patch("cloudinary.uploader.upload")
-def test_upload_success_x_admin_token(mock_upload, client, admin_secret_headers):
-    """Test successful image upload using X-Admin-Token header."""
+def test_upload_success_is_admin_claim(mock_upload, client, admin_secret_headers):
+    """Test successful image upload using JWT with is_admin claim."""
     mock_upload.return_value = {
         "secure_url": "https://res.cloudinary.com/test_cloud/image/upload/v123456789/galxy/general/image.png",
         "public_id": "galxy/general/image",
@@ -325,3 +324,33 @@ def test_cloudinary_upload_timeout(mock_upload, client, admin_headers):
     assert res_json["success"] is False
     assert "timed out" in res_json["message"]
     assert mock_upload.call_count == 4
+
+
+def test_upload_forbidden_request(client, app):
+    """Test upload rejection when using a valid JWT with a non-admin role (403 Forbidden)."""
+    import jwt
+    import time
+    payload = {
+        "role": "user",  # Non-admin role
+        "exp": int(time.time()) + 3600
+    }
+    token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    
+    data = {
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png", "image/png"),
+        "folder": "galxy/products"
+    }
+    response = client.post(
+        "/api/admin/media/upload",
+        headers=headers,
+        data=data,
+        content_type="multipart/form-data"
+    )
+    
+    assert response.status_code == 403
+    res_json = response.get_json()
+    assert res_json["success"] is False
+    assert "Forbidden" in res_json["message"]
