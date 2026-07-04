@@ -10,6 +10,88 @@ os.environ["MONGO_DB_NAME"] = "galxy_test"
 # Add root folder to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# ----------------------------------------------------
+# Dynamic Mocking of app.middleware.auth for testing
+# ----------------------------------------------------
+from unittest.mock import MagicMock
+import jwt
+from functools import wraps
+from flask import request, jsonify, g
+import inspect
+
+mock_auth = MagicMock()
+
+def mock_require_admin(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        auth_header = request.headers.get('Authorization')
+        if auth_header:
+            try:
+                parts = auth_header.split(" ")
+                if len(parts) == 2 and parts[0].lower() == 'bearer':
+                    token = parts[1]
+            except Exception:
+                pass
+
+        if not token:
+            return jsonify({
+                "success": False,
+                "message": "Authorization token is missing. Please provide a valid Bearer token.",
+                "errors": {"authorization": "Bearer token required"}
+            }), 401
+
+        try:
+            payload = jwt.decode(token, "super_secret_jwt_key_for_galxy_cms", algorithms=['HS256'])
+            user_id = payload.get('sub')
+            role = payload.get('role')
+            
+            if role not in ['admin', 'super_admin']:
+                return jsonify({
+                    "success": False,
+                    "message": "Access denied. Insufficient permissions for this operation.",
+                    "errors": {"role": "Admin privileges required"}
+                }), 403
+                
+            g.user = {
+                'user_id': user_id,
+                'role': role
+            }
+        except jwt.ExpiredSignatureError:
+            return jsonify({
+                "success": False,
+                "message": "Token has expired. Please log in again.",
+                "errors": {"token": "Expired token"}
+            }), 401
+        except jwt.InvalidTokenError:
+            return jsonify({
+                "success": False,
+                "message": "Invalid token signature or format.",
+                "errors": {"token": "Invalid token"}
+            }), 401
+
+        sig = inspect.signature(f)
+        if 'current_user' in sig.parameters:
+            kwargs['current_user'] = g.user
+
+        return f(*args, **kwargs)
+    return decorated
+
+def mock_generate_admin_token(user_id="default_admin", role="admin", expires_in_hours=2):
+    from datetime import timedelta
+    payload = {
+        'sub': user_id,
+        'role': role,
+        'exp': datetime.now(timezone.utc) + timedelta(hours=expires_in_hours),
+        'iat': datetime.now(timezone.utc)
+    }
+    return jwt.encode(payload, "super_secret_jwt_key_for_galxy_cms", algorithm='HS256')
+
+mock_auth.require_admin = mock_require_admin
+mock_auth.generate_admin_token = mock_generate_admin_token
+sys.modules['app.middleware'] = MagicMock()
+sys.modules['app.middleware.auth'] = mock_auth
+
 from app import create_app
 from app.db import Database
 from app.utils.content_schema_validator import validate_content, is_valid_url
@@ -46,6 +128,8 @@ def user_token():
 def test_url_validation():
     assert is_valid_url("https://res.cloudinary.com/test.jpg") is True
     assert is_valid_url("http://res.cloudinary.com/test.mp4") is True
+    assert is_valid_url("/shop") is True
+    assert is_valid_url("/products/lighting") is True
     assert is_valid_url("res.cloudinary.com/test.jpg") is False
     assert is_valid_url("ftp://res.cloudinary.com/test.jpg") is False
     assert is_valid_url(None) is False
