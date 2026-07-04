@@ -13,13 +13,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def create_app(config_class=Config) -> Flask:
     """
     Application factory to create and configure the Flask app.
     """
     app = Flask(__name__)
     app.config.from_object(config_class)
-    
+
     # 1. Initialize MongoDB Atlas client
     # PyMongo client is attached to the app object as app.mongo_client and app.db
     # This allows other modules to reuse the connection.
@@ -30,7 +31,8 @@ def create_app(config_class=Config) -> Flask:
             app.db = app.mongo_client[config_class.MONGO_DB_NAME]
             # Trigger a connection test (MongoClient is lazy)
             app.mongo_client.admin.command('ping')
-            logger.info(f"Successfully connected to MongoDB database '{config_class.MONGO_DB_NAME}'.")
+            logger.info(
+                f"Successfully connected to MongoDB database '{config_class.MONGO_DB_NAME}'.")
         except Exception as e:
             logger.error(f"MongoDB connection failed: {e}")
             app.mongo_client = None
@@ -43,6 +45,7 @@ def create_app(config_class=Config) -> Flask:
     # 2. Register request ID generator
     import uuid
     from flask import g, request
+
     @app.before_request
     def add_request_id():
         g.request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
@@ -50,7 +53,7 @@ def create_app(config_class=Config) -> Flask:
     # 3. Register Blueprints
     logger.info("Registering media routes blueprint...")
     app.register_blueprint(media_bp)
-    
+
     # 3. Register global exception handlers
     @app.errorhandler(HTTPException)
     def handle_http_exception(e):
@@ -60,13 +63,14 @@ def create_app(config_class=Config) -> Flask:
         """
         # Catch Flask's request payload limit (MAX_CONTENT_LENGTH)
         if e.code == 413:
-            logger.warning("Request payload exceeded MAX_CONTENT_LENGTH limit.")
+            logger.warning(
+                "Request payload exceeded MAX_CONTENT_LENGTH limit.")
             return jsonify({
                 "success": False,
                 "message": f"File size exceeds the maximum limit of {config_class.MAX_FILE_SIZE_MB} MB.",
                 "errors": ["RequestEntityTooLarge"]
             }), 413
-            
+
         logger.warning(f"HTTPException {e.code}: {e.description}")
         return jsonify({
             "success": False,
@@ -88,6 +92,7 @@ def create_app(config_class=Config) -> Flask:
 
     logger.info("Flask application configured successfully.")
     return app
+
 
 if __name__ == "__main__":
     app = create_app()

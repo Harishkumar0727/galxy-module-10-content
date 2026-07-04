@@ -10,16 +10,17 @@ cloudinary.config(
     secure=True
 )
 
+
 def upload_image(file_or_url, folder: str, tags: list[str] | None = None, timeout: int = 30) -> dict:
     """
     Uploads a file-like object, file path, or URL to Cloudinary in the specified folder.
-    
+
     Args:
         file_or_url: A file-like object, file path, or remote URL to upload.
         folder: The destination folder in Cloudinary.
         tags: Optional list of tags to associate with the uploaded image.
         timeout: The timeout duration in seconds for the request.
-        
+
     Returns:
         dict: A dictionary containing:
             - url: The secure URL of the uploaded image.
@@ -27,7 +28,7 @@ def upload_image(file_or_url, folder: str, tags: list[str] | None = None, timeou
             - width: Width of the image.
             - height: Height of the image.
             - format: File format (e.g. png, jpg).
-            
+
     Raises:
         Exception: Direct propagation of exceptions raised by the Cloudinary SDK.
     """
@@ -38,9 +39,9 @@ def upload_image(file_or_url, folder: str, tags: list[str] | None = None, timeou
     }
     if tags:
         params["tags"] = tags
-        
+
     response = cloudinary.uploader.upload(file_or_url, **params)
-    
+
     return {
         "url": response.get("secure_url"),
         "public_id": response.get("public_id"),
@@ -53,13 +54,13 @@ def upload_image(file_or_url, folder: str, tags: list[str] | None = None, timeou
 def delete_image(public_id: str) -> bool:
     """
     Deletes an asset from Cloudinary using its public ID.
-    
+
     Args:
         public_id: The public ID of the image to delete.
-        
+
     Returns:
         bool: True if deleted successfully, False otherwise.
-        
+
     Raises:
         Exception: Direct propagation of exceptions raised by the Cloudinary SDK.
     """
@@ -81,17 +82,17 @@ def extract_public_id_from_url(url: str) -> str:
     marker_idx = url.find(upload_marker)
     if marker_idx == -1:
         return ""
-    
+
     # Get everything after '/upload/'
     path_after_upload = url[marker_idx + len(upload_marker):]
-    
+
     # Split by '/' to see if the first segment is a version string like 'v123456789'
     parts = path_after_upload.split("/", 1)
     if len(parts) > 1 and parts[0].startswith("v") and parts[0][1:].isdigit():
         path_after_version = parts[1]
     else:
         path_after_version = path_after_upload
-        
+
     # Strip the file extension
     public_id = path_after_version.rsplit(".", 1)[0]
     return public_id

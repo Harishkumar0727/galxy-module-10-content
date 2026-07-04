@@ -20,7 +20,7 @@ def upload_media():
     Accepts multipart/form-data with fields:
       - file: The file to be uploaded (required)
       - folder: The target folder whitelist path (optional, defaults to 'galxy/general')
-      
+
     Returns:
       JSON: Success or Failure payload.
     """
@@ -32,19 +32,19 @@ def upload_media():
             "message": "No file was uploaded or file field is missing.",
             "errors": ["The 'file' parameter must be provided in multipart/form-data."]
         }), 400
-        
+
     file = request.files["file"]
-    
+
     # 2. Get the target folder (default if not specified)
     folder = request.form.get("folder", Config.DEFAULT_FOLDER)
-    
+
     try:
         # 3. Call the media upload service
         url = upload_to_folder(file, folder)
-        
+
         # 4. Extract public ID from the URL
         public_id = extract_public_id_from_url(url)
-        
+
         # 5. Return success response
         return jsonify({
             "success": True,
@@ -53,7 +53,7 @@ def upload_media():
                 "public_id": public_id
             }
         }), 200
-        
+
     except MediaUploadError as e:
         # Domain exceptions mapped to their specific status codes (e.g. 400, 413, 500)
         logger.warning(f"Business validation error: {e.message}")
@@ -62,7 +62,7 @@ def upload_media():
             "message": e.message,
             "errors": [e.__class__.__name__]
         }), e.status_code
-        
+
     except Exception as e:
         # Unexpected server errors (500)
         logger.exception("Unexpected server error occurred during upload.")

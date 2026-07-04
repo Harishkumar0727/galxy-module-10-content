@@ -4,6 +4,7 @@ import time
 from app.app import create_app
 from app.config.config import Config
 
+
 class TestConfig(Config):
     TESTING = True
     MONGO_URI = ""  # Skip MongoDB connection to prevent network calls in tests
@@ -12,14 +13,17 @@ class TestConfig(Config):
     CLOUDINARY_API_SECRET = "test_secret"
     SECRET_KEY = "test-secret-key-for-jwt-signing-long-enough-32"
 
+
 @pytest.fixture
 def app():
     app = create_app(TestConfig)
     return app
 
+
 @pytest.fixture
 def client(app):
     return app.test_client()
+
 
 @pytest.fixture
 def admin_headers(app):
@@ -33,6 +37,7 @@ def admin_headers(app):
         "Authorization": f"Bearer {token}"
     }
 
+
 @pytest.fixture
 def admin_secret_headers(app):
     """Generate headers with a valid JWT containing the is_admin claim."""
@@ -45,6 +50,7 @@ def admin_secret_headers(app):
         "Authorization": f"Bearer {token}"
     }
 
+
 @pytest.fixture
 def invalid_auth_headers():
     """Generate headers with a token signed with an invalid secret key."""
@@ -53,7 +59,8 @@ def invalid_auth_headers():
         "exp": int(time.time()) + 3600
     }
     # Signed with an invalid key to fail signature verification
-    token = jwt.encode(payload, "invalid-secret-key-long-enough-32", algorithm="HS256")
+    token = jwt.encode(
+        payload, "invalid-secret-key-long-enough-32", algorithm="HS256")
     return {
         "Authorization": f"Bearer {token}"
     }
