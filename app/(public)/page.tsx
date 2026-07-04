@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { getBulkSections, getSection } from '@/lib/api/site-content';
-import { SeoHomeContent, HeroContent, AboutContent, FooterContent, SocialLinksContent } from '@/lib/types/site-content';
+import { SeoHomeContent, HeroContent, FooterContent, SocialLinksContent } from '@/lib/types/site-content';
 import HeroSection from '@/components/site-content/HeroSection';
 import SocialLinks from '@/components/site-content/SocialLinks';
 
@@ -19,20 +19,19 @@ export async function generateMetadata(): Promise<Metadata> {
     };
   } catch (error) {
     console.error('Error generating homepage metadata:', error);
-    return {}; // No hardcoded fallback
+    return {}; // Safely returns empty, letting Next.js fall back to root layout metadata
   }
 }
 
 export default async function HomePage() {
   let hero: HeroContent | null = null;
-  let about: AboutContent | null = null;
   let footer: FooterContent | null = null;
   let socialLinks: SocialLinksContent | null = null;
 
   try {
-    const data = await getBulkSections(['hero', 'about', 'footer', 'social_links']);
+    // Keep homepage bulk fetch exactly as specified in the original Module 10 document
+    const data = await getBulkSections(['hero', 'footer', 'social_links']);
     hero = data.hero || null;
-    about = data.about || null;
     footer = data.footer || null;
     socialLinks = data.social_links || null;
   } catch (error) {
@@ -61,8 +60,8 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* Featured Content / Studio Showcase (API Driven) */}
-      {about && (
+      {/* Featured Content / Studio Showcase (API Driven & Spec Compliant) */}
+      {footer && socialLinks && (
         <section style={{
           padding: '6rem 2rem',
           maxWidth: 'var(--max-width)',
@@ -80,67 +79,66 @@ export default async function HomePage() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}>
-              {about.title}
+              Discover the Studio
             </h2>
             <p style={{
               color: 'var(--text-secondary)',
               fontSize: '1.05rem',
-              maxWidth: '800px',
+              maxWidth: '600px',
               margin: '0 auto',
               fontWeight: 300,
-              lineHeight: '1.8',
-              whiteSpace: 'pre-line'
+              lineHeight: '1.6'
             }}>
-              {about.body_text}
+              {footer.tagline}
             </p>
           </div>
 
-          {/* Dynamic Grid showing about image showcase */}
-          {about.images && about.images.length > 0 && (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-              gap: '2rem',
-              marginBottom: '4rem'
-            }}>
-              {about.images.slice(0, 3).map((img, idx) => (
-                <div key={idx} className="glass-card" style={{ padding: '0', overflow: 'hidden', borderRadius: '16px', aspectRatio: '1.5' }}>
-                  <img src={img} alt={`Showcase visual ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-              ))}
+          {/* Featured Cards / Visual Showcase Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '2.5rem',
+            marginBottom: '4rem'
+          }}>
+            {/* Visual Card 1 */}
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '2rem' }}>
+              <div style={{ color: 'var(--color-pink)', fontWeight: 800, fontSize: '1.25rem', fontFamily: 'var(--font-display)' }}>
+                Studio Hours
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', fontWeight: 300, whiteSpace: 'pre-line' }}>
+                {footer.business_hours}
+              </p>
             </div>
-          )}
 
-          {/* Dynamic footer/social integrations to consume all bulk fetched sections */}
-          {footer && socialLinks && (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '2.5rem',
-              marginTop: '4rem',
-              borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-              paddingTop: '4rem'
-            }}>
-              <div className="glass-card">
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Studio Tagline</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', fontWeight: 300 }}>
-                  {footer.tagline}
-                </p>
+            {/* Visual Card 2 */}
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '2rem', justifyContent: 'center', alignItems: 'center' }}>
+              <div style={{ color: 'var(--color-blue)', fontWeight: 800, fontSize: '1.25rem', fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>
+                Connect Online
               </div>
+              <SocialLinks socialLinks={socialLinks} />
+            </div>
 
-              <div className="glass-card">
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Business Hours</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', fontWeight: 300, whiteSpace: 'pre-line' }}>
-                  {footer.business_hours}
-                </p>
+            {/* Visual Card 3 - Showcase placeholder (No hardcoded text copy) */}
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '2rem' }}>
+              <div style={{ color: 'var(--color-violet)', fontWeight: 800, fontSize: '1.25rem', fontFamily: 'var(--font-display)' }}>
+                GALXY Design
               </div>
-
-              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Connect With Us</h3>
-                <SocialLinks socialLinks={socialLinks} />
+              <div style={{
+                height: '100%',
+                minHeight: '80px',
+                backgroundImage: 'linear-gradient(135deg, rgba(255, 45, 85, 0.1), rgba(88, 86, 214, 0.1))',
+                borderRadius: '12px',
+                border: '1px dashed rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-muted)',
+                fontSize: '0.85rem',
+              }}>
+                Artistic Craft Studio
               </div>
             </div>
-          )}
+          </div>
         </section>
       )}
     </div>
