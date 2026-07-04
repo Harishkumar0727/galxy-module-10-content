@@ -14,6 +14,12 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    # Security hygiene check for hardcoded default fallback keys
+    if app.config.get('SECRET_KEY') == 'default-flask-secret-key-galxy':
+        logger.warning("SECURITY WARNING: Using default hardcoded SECRET_KEY! Please configure SECRET_KEY in environment variables.")
+    if app.config.get('JWT_SECRET') == 'super_secret_jwt_key_for_galxy_cms':
+        logger.warning("SECURITY WARNING: Using default hardcoded JWT_SECRET! Please configure JWT_SECRET in environment variables.")
+
     # Initialize MongoDB Collections & Indexes on startup
     try:
         Database.init_db()
