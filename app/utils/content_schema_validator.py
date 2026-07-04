@@ -59,13 +59,10 @@ EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 # Allows standard phone numbers, international prefixes, spaces, hyphens, and parens
 PHONE_REGEX = re.compile(r"^\+?[0-9\s\-()]{7,25}$")
 
-def is_valid_url(url_string):
-    """Helper to validate if a string is a valid HTTP/HTTPS URL or root-relative path."""
+def is_valid_absolute_url(url_string):
+    """Helper to validate if a string is a valid absolute HTTP/HTTPS URL."""
     if not isinstance(url_string, str):
         return False
-    # Allow root-relative paths (e.g. /shop, /products/lighting)
-    if url_string.startswith("/"):
-        return True
     # Quick visual and parse verification for absolute URLs
     if not (url_string.startswith("http://") or url_string.startswith("https://")):
         return False
@@ -74,6 +71,18 @@ def is_valid_url(url_string):
         return all([result.scheme in ['http', 'https'], result.netloc])
     except Exception:
         return False
+
+def is_valid_cta_link(url_string):
+    """Helper to validate if a string is a valid HTTP/HTTPS URL or root-relative path."""
+    if not isinstance(url_string, str):
+        return False
+    # Allow root-relative paths (e.g. /shop, /products/lighting)
+    if url_string.startswith("/"):
+        return True
+    return is_valid_absolute_url(url_string)
+
+# Keep alias for test backward-compatibility
+is_valid_url = is_valid_cta_link
 
 def validate_content(section, content):
     """
@@ -98,10 +107,15 @@ def validate_content(section, content):
             
     # 2. Check for required/nullable fields and type correctness
     for field_name, rule in schema.items():
-        if field_name not in content or content[field_name] is None:
+        # Check if field is completely missing
+        if field_name not in content:
             if rule.get("required"):
                 errors[field_name] = "Field is required and cannot be null."
-            elif not rule.get("nullable", False):
+            continue
+            
+        # Check if field is explicitly set to null
+        if content[field_name] is None:
+            if not rule.get("nullable", False):
                 errors[field_name] = "Field cannot be null."
             continue
             
@@ -158,18 +172,20 @@ def validate_content(section, content):
                             url_val = link["url"]
                             if not isinstance(url_val, str):
                                 errors[f"quick_links[{idx}].url"] = f"Expected type str, got {type(url_val).__name__}."
-                            elif not is_valid_url(url_val):
+                            elif not is_valid_absolute_url(url_val):
                                 errors[f"quick_links[{idx}].url"] = "Invalid URL format."
         elif path == "images" and "images" in content:
             imgs = content["images"]
             if isinstance(imgs, list):
                 for idx, img in enumerate(imgs):
                     if isinstance(img, str):
-                        if not is_valid_url(img):
-                            errors[f"images[{idx}]"] = "Invalid URL format."
+                        if not is_valid_absolute_url(img):
+                             errors[f"images[{idx}]"] = "Invalid URL format."
         elif path in content and content[path] is not None:
             url_val = content[path]
-            if not is_valid_url(url_val):
+            # Only cta_link is allowed to be root-relative
+            checker = is_valid_cta_link if path == "cta_link" else is_valid_absolute_url
+            if not checker(url_val):
                 errors[path] = "Invalid URL format."
 
     return len(errors) == 0, errors

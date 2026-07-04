@@ -65,6 +65,42 @@ def test_url_validation():
     assert is_valid_url(None) is False
     assert is_valid_url(123) is False
 
+def test_validator_url_relative_path_rules():
+    # 1. cta_link in hero allows root-relative path
+    hero_content = {
+        "headline": "Welcome",
+        "subheadline": "Studio description",
+        "background_video_url": "https://res.cloudinary.com/video.mp4",
+        "background_image_url": "https://res.cloudinary.com/image.jpg",
+        "cta_text": "Click here",
+        "cta_link": "/shop"
+    }
+    is_valid, errors = validate_content("hero", hero_content)
+    assert is_valid is True
+
+    # 2. background_image_url in hero does NOT allow root-relative path
+    hero_content_invalid = {
+        "headline": "Welcome",
+        "subheadline": "Studio description",
+        "background_video_url": "https://res.cloudinary.com/video.mp4",
+        "background_image_url": "/workshop_image.jpg",
+        "cta_text": "Click here",
+        "cta_link": "https://res.cloudinary.com/link"
+    }
+    is_valid_inv, errors_inv = validate_content("hero", hero_content_invalid)
+    assert is_valid_inv is False
+    assert "background_image_url" in errors_inv
+
+    # 3. social_links.instagram does NOT allow root-relative path
+    social_content = {
+        "instagram": "/just-a-path",
+        "facebook": "https://facebook.com/galxystudio",
+        "youtube": "https://youtube.com/c/galxystudio"
+    }
+    is_valid_soc, errors_soc = validate_content("social_links", social_content)
+    assert is_valid_soc is False
+    assert "instagram" in errors_soc
+
 def test_validator_valid_hero():
     hero_content = {
         "headline": "Welcome",

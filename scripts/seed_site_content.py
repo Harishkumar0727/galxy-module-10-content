@@ -20,7 +20,7 @@ DEFAULT_SEEDS = {
         "background_video_url": "https://res.cloudinary.com/cipbjrym/video/upload/v1/hero_bg.mp4",
         "background_image_url": "https://res.cloudinary.com/cipbjrym/image/upload/v1/hero_bg.jpg",
         "cta_text": "Explore Collection",
-        "cta_link": "https://res.cloudinary.com/cipbjrym/image/upload/v1/collection"
+        "cta_link": "/shop"
     },
     "about": {
         "title": "About GALXY Studio",
@@ -35,8 +35,8 @@ DEFAULT_SEEDS = {
     "footer": {
         "tagline": "GALXY — Crafting Light from Dust",
         "quick_links": [
-            {"label": "Gallery", "url": "https://res.cloudinary.com/cipbjrym/image/upload/v1/gallery"},
-            {"label": "Contact Us", "url": "https://res.cloudinary.com/cipbjrym/image/upload/v1/contact"}
+            {"label": "Gallery", "url": "https://galxystudio.com/gallery"},
+            {"label": "Contact Us", "url": "https://galxystudio.com/contact"}
         ],
         "business_hours": "Mon - Fri: 9:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM"
     },
@@ -53,9 +53,9 @@ DEFAULT_SEEDS = {
         "og_image": "https://res.cloudinary.com/cipbjrym/image/upload/v1/og_banner.jpg"
     },
     "social_links": {
-        "instagram": "https://res.cloudinary.com/cipbjrym/image/upload/v1/instagram",
-        "facebook": "https://res.cloudinary.com/cipbjrym/image/upload/v1/facebook",
-        "youtube": "https://res.cloudinary.com/cipbjrym/image/upload/v1/youtube"
+        "instagram": "https://instagram.com/galxystudio",
+        "facebook": "https://facebook.com/galxystudio",
+        "youtube": "https://youtube.com/c/galxystudio"
     }
 }
 

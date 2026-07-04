@@ -1,5 +1,10 @@
 # GALXY CMS & Site Content Backend (Module 10)
 
+> [!IMPORTANT]
+> **INTEGRATION ARCHITECTURE & SCAFFOLDING NOTICE (Finding B):**
+> This repository is delivered with standalone running and testing files (`run.py`, `config.py`, `app/__init__.py`, `app/db.py`) to serve as a development and automated review test harness.
+> When integrating this module into the shared multi-module GALXY team backend alongside Modules 1–9, the blueprints (`public_bp` and `admin_bp` inside `app/routes/`) should be registered on the team's shared Flask app factory, and the DB handle inside `app/services/site_content_service.py` should import the shared DB handle instead of our standalone `app.db`. The duplicate scaffolding files (`run.py`, `config.py`, `app/__init__.py`, `app/db.py`) must be deleted or archived at merge time.
+
 This is the standalone backend service for **Module 10 (Site Content / CMS)** of the GALXY Custom Lighting & Craft Studio application. It implements the data layer, content validator, service operations, and the public and admin REST API endpoints.
 
 ---
