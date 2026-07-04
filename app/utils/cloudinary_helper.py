@@ -10,7 +10,7 @@ cloudinary.config(
     secure=True
 )
 
-def upload_image(file_or_url, folder: str, tags: list[str] | None = None) -> dict:
+def upload_image(file_or_url, folder: str, tags: list[str] | None = None, timeout: int = 30) -> dict:
     """
     Uploads a file-like object, file path, or URL to Cloudinary in the specified folder.
     
@@ -18,6 +18,7 @@ def upload_image(file_or_url, folder: str, tags: list[str] | None = None) -> dic
         file_or_url: A file-like object, file path, or remote URL to upload.
         folder: The destination folder in Cloudinary.
         tags: Optional list of tags to associate with the uploaded image.
+        timeout: The timeout duration in seconds for the request.
         
     Returns:
         dict: A dictionary containing:
@@ -32,7 +33,8 @@ def upload_image(file_or_url, folder: str, tags: list[str] | None = None) -> dic
     """
     params = {
         "folder": folder,
-        "resource_type": "image"
+        "resource_type": "image",
+        "timeout": timeout
     }
     if tags:
         params["tags"] = tags
@@ -48,7 +50,7 @@ def upload_image(file_or_url, folder: str, tags: list[str] | None = None) -> dic
     }
 
 
-def delete_image(public_id: str) -> dict:
+def delete_image(public_id: str) -> bool:
     """
     Deletes an asset from Cloudinary using its public ID.
     
@@ -56,12 +58,13 @@ def delete_image(public_id: str) -> dict:
         public_id: The public ID of the image to delete.
         
     Returns:
-        dict: The result dictionary returned by the Cloudinary API.
+        bool: True if deleted successfully, False otherwise.
         
     Raises:
         Exception: Direct propagation of exceptions raised by the Cloudinary SDK.
     """
-    return cloudinary.uploader.destroy(public_id)
+    result = cloudinary.uploader.destroy(public_id)
+    return result.get("result") == "ok"
 
 
 def extract_public_id_from_url(url: str) -> str:

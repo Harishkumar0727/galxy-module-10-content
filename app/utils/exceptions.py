@@ -45,3 +45,22 @@ class InvalidMimeTypeError(MediaUploadError):
         message = f"Unsupported MIME type '{mime_type}'. Allowed types: {', '.join(allowed_mime_types)}"
         super().__init__(message, status_code=400)
 
+
+class CloudinaryTimeoutError(MediaUploadError):
+    """Raised when the upload to Cloudinary times out."""
+    def __init__(self, message: str = "Cloudinary upload service timed out. Please try again."):
+        super().__init__(message, status_code=504)
+
+
+class CorruptedImageError(MediaUploadError):
+    """Raised when the uploaded file is corrupted or not a valid image."""
+    def __init__(self, message: str = "The uploaded file is corrupted or not a valid image."):
+        super().__init__(message, status_code=400)
+
+
+class InvalidImageDimensionsError(MediaUploadError):
+    """Raised when the image dimensions are invalid (e.g. 0 or negative)."""
+    def __init__(self, message: str = "Image dimensions must be greater than zero."):
+        super().__init__(message, status_code=400)
+
+

@@ -1,8 +1,12 @@
 import io
 import pytest
+import socket
 from unittest.mock import patch, MagicMock
 from app.config.config import Config
 from app.utils.exceptions import InvalidMimeTypeError, FileSizeExceededError
+
+# A valid 1x1 pixel PNG image bytes to pass Pillow verification
+VALID_PNG_BYTES = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc```\x00\x00\x00\x04\x00\x01\xf6\x178U\x00\x00\x00\x00IEND\xaeB`\x82'
 
 @patch("cloudinary.uploader.upload")
 def test_upload_success(mock_upload, client, admin_headers):
@@ -16,7 +20,7 @@ def test_upload_success(mock_upload, client, admin_headers):
     }
 
     data = {
-        "file": (io.BytesIO(b"fake png data"), "test.png"),
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png"),
         "folder": "galxy/products"
     }
     response = client.post(
@@ -45,7 +49,7 @@ def test_upload_success_x_admin_token(mock_upload, client, admin_secret_headers)
     }
 
     data = {
-        "file": (io.BytesIO(b"fake png data"), "test.png")
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png")
     }
     response = client.post(
         "/api/admin/media/upload",
@@ -99,7 +103,7 @@ def test_upload_invalid_extension(client, admin_headers):
 def test_upload_invalid_mime_type(client, admin_headers):
     """Test upload rejection for invalid MIME content type."""
     data = {
-        "file": (io.BytesIO(b"fake image data"), "test.png"),
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png"),
         "folder": "galxy/products"
     }
     # Set an invalid MIME type like text/plain for test.png
@@ -109,9 +113,9 @@ def test_upload_invalid_mime_type(client, admin_headers):
         data=data,
         content_type="multipart/form-data"
     )
-    # Since flask test client content_type is for the request, we define content type for the file:
+    # Define content type for the file:
     data = {
-        "file": (io.BytesIO(b"fake text"), "test.png", "text/plain"),
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png", "text/plain"),
         "folder": "galxy/products"
     }
     response = client.post(
@@ -149,7 +153,7 @@ def test_upload_file_too_large(client, admin_headers):
 def test_upload_invalid_folder_name(client, admin_headers):
     """Test target folder validation against whitelist."""
     data = {
-        "file": (io.BytesIO(b"fake png data"), "test.png", "image/png"),
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png", "image/png"),
         "folder": "galxy/unauthorized-folder"
     }
     response = client.post(
@@ -170,15 +174,16 @@ def test_cloudinary_upload_failure(mock_upload, client, admin_headers):
     mock_upload.side_effect = Exception("Cloudinary connection timed out")
 
     data = {
-        "file": (io.BytesIO(b"fake png data"), "test.png", "image/png"),
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png", "image/png"),
         "folder": "galxy/products"
     }
-    response = client.post(
-        "/api/admin/media/upload",
-        headers=admin_headers,
-        data=data,
-        content_type="multipart/form-data"
-    )
+    with patch("time.sleep") as mock_sleep:
+        response = client.post(
+            "/api/admin/media/upload",
+            headers=admin_headers,
+            data=data,
+            content_type="multipart/form-data"
+        )
 
     assert response.status_code == 500
     res_json = response.get_json()
@@ -203,7 +208,7 @@ def test_cloudinary_upload_success_after_retries(mock_upload, client, admin_head
     ]
 
     data = {
-        "file": (io.BytesIO(b"fake png data"), "test.png", "image/png"),
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png", "image/png"),
         "folder": "galxy/products"
     }
     # Temporarily speed up sleep delay in tests by patching time.sleep
@@ -225,7 +230,7 @@ def test_cloudinary_upload_success_after_retries(mock_upload, client, admin_head
 def test_upload_unauthorized_request(client, invalid_auth_headers):
     """Test upload rejection when using an invalid bearer token."""
     data = {
-        "file": (io.BytesIO(b"fake png data"), "test.png", "image/png"),
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png", "image/png"),
         "folder": "galxy/products"
     }
     response = client.post(
@@ -243,7 +248,7 @@ def test_upload_unauthorized_request(client, invalid_auth_headers):
 def test_upload_missing_authentication(client):
     """Test upload rejection when auth header is missing completely."""
     data = {
-        "file": (io.BytesIO(b"fake png data"), "test.png", "image/png"),
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png", "image/png"),
         "folder": "galxy/products"
     }
     response = client.post(
@@ -256,3 +261,67 @@ def test_upload_missing_authentication(client):
     res_json = response.get_json()
     assert res_json["success"] is False
     assert "Unauthorized" in res_json["message"]
+
+def test_upload_corrupted_image(client, admin_headers):
+    """Test upload rejection when file content is corrupted or not a valid image."""
+    data = {
+        "file": (io.BytesIO(b"corrupted binary data"), "test.png", "image/png"),
+        "folder": "galxy/products"
+    }
+    response = client.post(
+        "/api/admin/media/upload",
+        headers=admin_headers,
+        data=data,
+        content_type="multipart/form-data"
+    )
+    assert response.status_code == 400
+    res_json = response.get_json()
+    assert res_json["success"] is False
+    assert "corrupted" in res_json["message"]
+
+@patch("PIL.Image.open")
+def test_upload_invalid_image_dimensions(mock_open, client, admin_headers):
+    """Test upload rejection when image dimensions are invalid (e.g. width/height <= 0)."""
+    mock_img = MagicMock()
+    mock_img.verify.return_value = None
+    mock_img.size = (0, 100) # Invalid width
+    mock_img.format = "PNG"
+    mock_open.return_value = mock_img
+
+    data = {
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png", "image/png"),
+        "folder": "galxy/products"
+    }
+    response = client.post(
+        "/api/admin/media/upload",
+        headers=admin_headers,
+        data=data,
+        content_type="multipart/form-data"
+    )
+    assert response.status_code == 400
+    res_json = response.get_json()
+    assert res_json["success"] is False
+    assert "dimensions" in res_json["message"]
+
+@patch("cloudinary.uploader.upload")
+def test_cloudinary_upload_timeout(mock_upload, client, admin_headers):
+    """Test error handling when Cloudinary API times out."""
+    mock_upload.side_effect = socket.timeout("Connection timed out")
+
+    data = {
+        "file": (io.BytesIO(VALID_PNG_BYTES), "test.png", "image/png"),
+        "folder": "galxy/products"
+    }
+    with patch("time.sleep") as mock_sleep:
+        response = client.post(
+            "/api/admin/media/upload",
+            headers=admin_headers,
+            data=data,
+            content_type="multipart/form-data"
+        )
+
+    assert response.status_code == 504
+    res_json = response.get_json()
+    assert res_json["success"] is False
+    assert "timed out" in res_json["message"]
+    assert mock_upload.call_count == 4
