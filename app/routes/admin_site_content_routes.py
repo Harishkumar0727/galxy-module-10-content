@@ -4,14 +4,14 @@ import logging
 from app.services import site_content_service
 import os
 
-# Under non-development environments, strictly import from Module 1
-if os.environ.get("FLASK_ENV", "development").lower() != "development":
-    from app.middleware.auth import require_admin
-else:
+# Under non-development environments, strictly import from Module 1 (no fallback)
+if os.environ.get("FLASK_ENV") == "development":
     try:
         from app.middleware.auth import require_admin
     except ImportError:
         from app.utils._dev_auth_stub import require_admin
+else:
+    from app.middleware.auth import require_admin
 
 from app.utils.content_schema_validator import validate_content, SECTION_ENUM
 

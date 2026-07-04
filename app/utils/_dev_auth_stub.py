@@ -64,3 +64,16 @@ def require_admin(f):
 
         return f(*args, **kwargs)
     return decorated
+
+def generate_admin_token(user_id="default_admin", role="admin", expires_in_hours=2):
+    """
+    Utility function to generate a test token.
+    """
+    from datetime import datetime, timezone, timedelta
+    payload = {
+        'sub': user_id,
+        'role': role,
+        'exp': datetime.now(timezone.utc) + timedelta(hours=expires_in_hours),
+        'iat': datetime.now(timezone.utc)
+    }
+    return jwt.encode(payload, Config.JWT_SECRET, algorithm='HS256')
