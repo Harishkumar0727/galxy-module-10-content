@@ -1,17 +1,22 @@
 'use client';
 
 /**
- * app/(admin)/admin/site-content/page.tsx
+ * app/(admin)/site-content/page.tsx
  *
  * Admin CMS Panel — /admin/site-content
  * Tab/nav shell across all 6 site-content sections.
- * Fetches section data on tab switch (GET), saves via PUT.
+ * Fetches section data on first tab visit (GET), saves via PUT.
  * Maps 400 field errors inline. Shows toast for success/error.
+ *
+ * Fix 3: Moved from (admin)/admin/site-content/ → (admin)/site-content/
+ *         to eliminate the double-admin routing bug.
+ * Fix 5: Dirty-state tracking per tab + confirmation dialog before switching
+ *         away from an unsaved tab.
  *
  * Owned by: Member 4 (Leelavathy) — M-10D branch
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   SectionName,
   HeroContent,
@@ -67,6 +72,14 @@ export default function SiteContentPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Fix 5: Track dirty state per tab (true = has unsaved changes)
+  const [dirtyTabs, setDirtyTabs] = useState<Partial<Record<SectionName, boolean>>>({});
+
+  // Ref so the confirm dialog can read the latest dirty state without
+  // being captured in a stale closure
+  const dirtyTabsRef = useRef(dirtyTabs);
+  useEffect(() => { dirtyTabsRef.current = dirtyTabs; }, [dirtyTabs]);
+
   // ── Toast helpers ──────────────────────────────────────────────────────────
   const addToast = useCallback((type: ToastType, message: string) => {
     const id = ++toastCounter;
@@ -74,9 +87,10 @@ export default function SiteContentPage() {
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
   }, []);
 
-  // ── Fetch section data on tab switch ──────────────────────────────────────
+  // ── Fetch section data on first tab visit ─────────────────────────────────
+  // Fix 5: Do NOT reset form state after a GET — only populate if not already loaded.
   useEffect(() => {
-    if (sectionData[activeTab]) return; // already fetched
+    if (sectionData[activeTab]) return; // already fetched — preserve form state
 
     setLoading(true);
     setFieldErrors({});
@@ -92,6 +106,11 @@ export default function SiteContentPage() {
       })
       .finally(() => setLoading(false));
   }, [activeTab, sectionData, addToast]);
+
+  // ── Dirty-state handler ───────────────────────────────────────────────────
+  const handleDirtyChange = useCallback((tab: SectionName, isDirty: boolean) => {
+    setDirtyTabs((prev) => ({ ...prev, [tab]: isDirty }));
+  }, []);
 
   // ── Save handler ──────────────────────────────────────────────────────────
   const handleSave = useCallback(
@@ -109,6 +128,8 @@ export default function SiteContentPage() {
       if (result.ok) {
         // Update cache so re-switching tab doesn't refetch stale data
         setSectionData((prev) => ({ ...prev, [activeTab]: data }));
+        // Fix 5: Mark tab as clean after successful save
+        setDirtyTabs((prev) => ({ ...prev, [activeTab]: false }));
         addToast('success', `${TABS.find((t) => t.key === activeTab)?.label} section saved!`);
       } else {
         // 400: map field errors inline — do NOT reset form state, preserve user's input
@@ -121,11 +142,21 @@ export default function SiteContentPage() {
     [activeTab, addToast]
   );
 
-  // ── Tab switch ─────────────────────────────────────────────────────────────
-  const handleTabChange = (tab: SectionName) => {
+  // ── Tab switch with dirty-state guard ─────────────────────────────────────
+  // Fix 5: Show confirmation dialog if current tab has unsaved changes.
+  const handleTabChange = useCallback((tab: SectionName) => {
+    if (tab === activeTab) return;
+
+    if (dirtyTabsRef.current[activeTab]) {
+      const confirmed = window.confirm(
+        `You have unsaved changes in the "${TABS.find((t) => t.key === activeTab)?.label}" tab.\n\nLeave anyway? Your changes will be lost.`
+      );
+      if (!confirmed) return;
+    }
+
     setActiveTab(tab);
     setFieldErrors({});
-  };
+  }, [activeTab]);
 
   // ── Current section data ──────────────────────────────────────────────────
   const currentData = sectionData[activeTab] ?? DEFAULTS[activeTab];
@@ -159,6 +190,10 @@ export default function SiteContentPage() {
           >
             <span className="cms-tab-icon" aria-hidden="true">{icon}</span>
             <span className="cms-tab-label">{label}</span>
+            {/* Fix 5: amber dot indicator when tab has unsaved changes */}
+            {dirtyTabs[key] && (
+              <span className="cms-tab-dirty-dot" aria-label="Unsaved changes" title="Unsaved changes" />
+            )}
           </button>
         ))}
       </nav>
@@ -178,6 +213,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
+                onDirtyChange={(isDirty) => handleDirtyChange('hero', isDirty)}
               />
             )}
             {activeTab === 'about' && (
@@ -186,6 +222,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
+                onDirtyChange={(isDirty) => handleDirtyChange('about', isDirty)}
               />
             )}
             {activeTab === 'footer' && (
@@ -194,6 +231,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
+                onDirtyChange={(isDirty) => handleDirtyChange('footer', isDirty)}
               />
             )}
             {activeTab === 'contact' && (
@@ -202,6 +240,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
+                onDirtyChange={(isDirty) => handleDirtyChange('contact', isDirty)}
               />
             )}
             {activeTab === 'seo_home' && (
@@ -210,6 +249,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
+                onDirtyChange={(isDirty) => handleDirtyChange('seo_home', isDirty)}
               />
             )}
             {activeTab === 'social_links' && (
@@ -218,6 +258,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
+                onDirtyChange={(isDirty) => handleDirtyChange('social_links', isDirty)}
               />
             )}
           </>

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * components/admin/site-content/MediaUploadField.tsx
+ * components/admin/MediaUploadField.tsx
  *
  * Shared image-picker used by HeroForm (background_image),
  * AboutForm (images[], founder_photo), and SeoHomeForm (og_image).
@@ -12,10 +12,15 @@
  *   200 → { data: { url: string } }
  *   400/413 → show inline error, preserve existing value
  *
+ * Fix 4c: Reads JWT from SessionContext and attaches:
+ *           Authorization: Bearer <token>
+ *         to the upload request, satisfying Module 1 auth requirements.
+ *
  * Owned by: Member 4 (Leelavathy) — M-10D
  */
 
 import React, { useRef, useState } from 'react';
+import { useSessionToken } from '@/lib/context/SessionContext';
 
 interface MediaUploadFieldProps {
   label: string;
@@ -36,6 +41,9 @@ export default function MediaUploadField({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Fix 4c: Get JWT from session context to attach as Authorization header
+  const token = useSessionToken();
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -48,8 +56,16 @@ export default function MediaUploadField({
       formData.append('file', file);
       formData.append('folder', folder);
 
+      // Build headers — always include Content-Type is NOT set for multipart
+      // (browser sets it automatically with boundary). Only add Authorization.
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch('/api/admin/media/upload', {
         method: 'POST',
+        headers,
         body: formData,
       });
 
@@ -61,6 +77,8 @@ export default function MediaUploadField({
       } else if (res.status === 400) {
         const json = await res.json();
         setUploadError(json.message ?? 'Invalid file. Upload rejected.');
+      } else if (res.status === 401) {
+        setUploadError('Session expired. Please log in again.');
       } else {
         setUploadError('Upload failed. Please try again.');
       }

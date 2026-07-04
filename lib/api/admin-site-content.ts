@@ -5,6 +5,14 @@
  *   GET  /api/admin/site-content/:section
  *   PUT  /api/admin/site-content/:section  → body: { content: {...} }
  *
+ * Fix 4 / Fix 7: Accepts an optional JWT token and attaches
+ *   Authorization: Bearer <token>
+ * to align with Module 1's authentication requirements.
+ *
+ * Fix 7: Response envelope matches Member 1's shape:
+ *   GET  → { success: true, data: { section, content } }
+ *   PUT  → 200 OK or 400 { success: false, message, errors }
+ *
  * Owned by: Member 4 (Leelavathy) — M-10D
  */
 
@@ -15,14 +23,22 @@ import type {
   SiteContentErrorResponse,
 } from '@/lib/types/site-content';
 
+// ─── Auth header builder ──────────────────────────────────────────────────────
+function authHeaders(token?: string | null): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+}
+
 // ─── GET ─────────────────────────────────────────────────────────────────────
 
 export async function fetchSectionContent<T extends SectionContent>(
-  section: SectionName
+  section: SectionName,
+  token?: string | null
 ): Promise<T> {
   const res = await fetch(`/api/admin/site-content/${section}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(token),
     cache: 'no-store',
   });
 
@@ -47,11 +63,12 @@ export type SaveResult =
  */
 export async function saveSectionContent<T extends SectionContent>(
   section: SectionName,
-  content: T
+  content: T,
+  token?: string | null
 ): Promise<SaveResult> {
   const res = await fetch(`/api/admin/site-content/${section}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(token),
     body: JSON.stringify({ content }),
   });
 

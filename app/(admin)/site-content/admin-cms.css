@@ -95,6 +95,16 @@
   font-weight: 600;
 }
 
+/* ─── Dirty indicator dot on tab ────────────────────────────────────────── */
+.cms-tab-dirty-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-warning);
+  flex-shrink: 0;
+}
+
 .cms-tab-icon { font-size: 15px; line-height: 1; }
 .cms-tab-label { line-height: 1; }
 
@@ -385,15 +395,16 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   transition: background var(--transition-fast), border-color var(--transition-fast);
-  cursor: grab;
+  cursor: default;
+  list-style: none;
 }
 
-.quick-link-row:active { cursor: grabbing; }
-
+/* dnd-kit: dragging overlay state */
 .quick-link-row--dragging {
   background: var(--color-accent-dim);
   border-color: var(--color-accent);
   opacity: 0.85;
+  box-shadow: 0 4px 20px rgba(77, 108, 250, 0.2);
 }
 
 .drag-handle {
@@ -401,7 +412,11 @@
   font-size: 16px;
   user-select: none;
   flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
 }
+
+.drag-handle:active { cursor: grabbing; }
 
 .quick-link-row .field-input { flex: 1; min-width: 0; }
 

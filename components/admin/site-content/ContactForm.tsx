@@ -9,7 +9,7 @@
  * Owned by: Member 4 (Leelavathy) — M-10D
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { ContactContent } from '@/lib/types/site-content';
 
 interface ContactFormProps {
@@ -17,6 +17,7 @@ interface ContactFormProps {
   onSave: (data: ContactContent) => Promise<void>;
   saving: boolean;
   fieldErrors: Record<string, string>;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 export default function ContactForm({
@@ -24,8 +25,15 @@ export default function ContactForm({
   onSave,
   saving,
   fieldErrors,
+  onDirtyChange,
 }: ContactFormProps) {
   const [form, setForm] = useState<ContactContent>(initialData);
+  const initialRef = useRef(initialData);
+
+  useEffect(() => {
+    const isDirty = JSON.stringify(form) !== JSON.stringify(initialRef.current);
+    onDirtyChange?.(isDirty);
+  }, [form, onDirtyChange]);
 
   const set = <K extends keyof ContactContent>(key: K, value: ContactContent[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -33,6 +41,8 @@ export default function ContactForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSave(form);
+    initialRef.current = form;
+    onDirtyChange?.(false);
   };
 
   return (

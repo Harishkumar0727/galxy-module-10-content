@@ -9,7 +9,7 @@
  * Owned by: Member 4 (Leelavathy) — M-10D
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { HeroContent } from '@/lib/types/site-content';
 import MediaUploadField from '@/components/admin/MediaUploadField';
 
@@ -18,6 +18,8 @@ interface HeroFormProps {
   onSave: (data: HeroContent) => Promise<void>;
   saving: boolean;
   fieldErrors: Record<string, string>;
+  /** Fix 5: called whenever form diverges from / matches initialData */
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 export default function HeroForm({
@@ -25,8 +27,16 @@ export default function HeroForm({
   onSave,
   saving,
   fieldErrors,
+  onDirtyChange,
 }: HeroFormProps) {
   const [form, setForm] = useState<HeroContent>(initialData);
+  const initialRef = useRef(initialData);
+
+  // Fix 5: notify parent whenever dirty state changes
+  useEffect(() => {
+    const isDirty = JSON.stringify(form) !== JSON.stringify(initialRef.current);
+    onDirtyChange?.(isDirty);
+  }, [form, onDirtyChange]);
 
   const set = <K extends keyof HeroContent>(key: K, value: HeroContent[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -34,6 +44,9 @@ export default function HeroForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSave(form);
+    // After save, update the ref so the form is no longer dirty
+    initialRef.current = form;
+    onDirtyChange?.(false);
   };
 
   return (

@@ -10,7 +10,7 @@
  * Owned by: Member 4 (Leelavathy) — M-10D
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { SeoHomeContent } from '@/lib/types/site-content';
 import MediaUploadField from '@/components/admin/MediaUploadField';
 
@@ -19,6 +19,7 @@ interface SeoHomeFormProps {
   onSave: (data: SeoHomeContent) => Promise<void>;
   saving: boolean;
   fieldErrors: Record<string, string>;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 export default function SeoHomeForm({
@@ -26,8 +27,15 @@ export default function SeoHomeForm({
   onSave,
   saving,
   fieldErrors,
+  onDirtyChange,
 }: SeoHomeFormProps) {
   const [form, setForm] = useState<SeoHomeContent>(initialData);
+  const initialRef = useRef(initialData);
+
+  useEffect(() => {
+    const isDirty = JSON.stringify(form) !== JSON.stringify(initialRef.current);
+    onDirtyChange?.(isDirty);
+  }, [form, onDirtyChange]);
 
   const set = <K extends keyof SeoHomeContent>(key: K, value: SeoHomeContent[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -35,6 +43,8 @@ export default function SeoHomeForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSave(form);
+    initialRef.current = form;
+    onDirtyChange?.(false);
   };
 
   // Character count helpers

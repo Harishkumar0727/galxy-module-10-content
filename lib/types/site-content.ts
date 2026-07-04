@@ -1,11 +1,20 @@
 /**
  * lib/types/site-content.ts
  *
- * Placeholder type definitions for all 6 site-content sections.
- * TODO: Replace this file with Barkavi's (M-10C) merged lib/types/site-content.ts
- *       once her branch is merged into dev. Do NOT redefine these — import from here.
+ * Canonical type definitions for all 6 site-content sections.
  *
- * Owned by: Member 3 (Barkavi) — read-only for Member 4 (Leelavathy)
+ * TYPE OWNERSHIP: Member 3 (Barkavi — M-10C) owns these interfaces.
+ * This file acts as the shared source of truth within this module until
+ * Barkavi's branch is merged into dev. Once merged, REPLACE the contents
+ * of this file with a barrel re-export from her package:
+ *
+ *   export type * from '@galxy/shared-types/site-content';
+ *
+ * DO NOT redefine these types in any other file — always import from here.
+ *
+ * Consumers:
+ *   - Member 4 (Leelavathy — M-10D): Admin CMS forms (read-only)
+ *   - Member 1 (Harishkumar): API route validation (read-only)
  */
 
 // ─── Hero Section ────────────────────────────────────────────────────────────

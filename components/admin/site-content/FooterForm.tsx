@@ -6,20 +6,122 @@
  * Admin form for the footer section.
  * Fields: tagline, quick_links[] (dynamic add/remove/reorder), copyright_text
  *
- * quick_links is a dynamic array of { label, href } — fully editable with
- * add, remove, and drag-to-reorder controls.
+ * Fix 6: Replaced unreliable HTML5 drag API with @dnd-kit/sortable.
+ *         Works correctly on touch devices; no ghost-image jank.
+ * Fix 5: Added onDirtyChange prop + dirty tracking via useEffect.
  *
  * Owned by: Member 4 (Leelavathy) — M-10D
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { FooterContent, QuickLink } from '@/lib/types/site-content';
 
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// ─── Sortable quick-link row ──────────────────────────────────────────────────
+interface SortableRowProps {
+  id: string;
+  idx: number;
+  link: QuickLink;
+  fieldErrors: Record<string, string>;
+  onUpdate: (idx: number, field: keyof QuickLink, value: string) => void;
+  onRemove: (idx: number) => void;
+}
+
+function SortableRow({
+  id,
+  idx,
+  link,
+  fieldErrors,
+  onUpdate,
+  onRemove,
+}: SortableRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`quick-link-row${isDragging ? ' quick-link-row--dragging' : ''}`}
+      role="listitem"
+      aria-label={`Quick link ${idx + 1}`}
+    >
+      {/* Drag handle — only this element activates the drag */}
+      <span
+        className="drag-handle"
+        aria-label="Drag to reorder"
+        title="Drag to reorder"
+        {...attributes}
+        {...listeners}
+      >
+        ⠿
+      </span>
+
+      <input
+        type="text"
+        className={`field-input field-input--sm${fieldErrors[`quick_links.${idx}.label`] ? ' field-input--error' : ''}`}
+        value={link.label}
+        onChange={(e) => onUpdate(idx, 'label', e.target.value)}
+        placeholder="Label (e.g. Portfolio)"
+        aria-label={`Quick link ${idx + 1} label`}
+      />
+
+      <input
+        type="text"
+        className={`field-input field-input--sm${fieldErrors[`quick_links.${idx}.href`] ? ' field-input--error' : ''}`}
+        value={link.href}
+        onChange={(e) => onUpdate(idx, 'href', e.target.value)}
+        placeholder="URL (e.g. /portfolio)"
+        aria-label={`Quick link ${idx + 1} URL`}
+      />
+
+      <button
+        type="button"
+        className="btn btn-ghost btn-danger-text btn-icon"
+        onClick={() => onRemove(idx)}
+        aria-label={`Remove quick link ${idx + 1}`}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
+// ─── FooterForm ───────────────────────────────────────────────────────────────
 interface FooterFormProps {
   initialData: FooterContent;
   onSave: (data: FooterContent) => Promise<void>;
   saving: boolean;
   fieldErrors: Record<string, string>;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 export default function FooterForm({
@@ -27,14 +129,21 @@ export default function FooterForm({
   onSave,
   saving,
   fieldErrors,
+  onDirtyChange,
 }: FooterFormProps) {
   const [form, setForm] = useState<FooterContent>(initialData);
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const initialRef = useRef(initialData);
+
+  // Fix 5: dirty tracking
+  useEffect(() => {
+    const isDirty = JSON.stringify(form) !== JSON.stringify(initialRef.current);
+    onDirtyChange?.(isDirty);
+  }, [form, onDirtyChange]);
 
   const set = <K extends keyof FooterContent>(key: K, value: FooterContent[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  // ── Quick-links array helpers ──────────────────────────────────────────────
+  // ── Quick-links helpers ────────────────────────────────────────────────────
   const addLink = () =>
     setForm((prev) => ({
       ...prev,
@@ -55,24 +164,29 @@ export default function FooterForm({
       ),
     }));
 
-  // Drag-to-reorder
-  const handleDragStart = (idx: number) => setDragIdx(idx);
-  const handleDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    if (dragIdx === null || dragIdx === idx) return;
+  // Fix 6: dnd-kit reorder via arrayMove
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
     setForm((prev) => {
-      const links = [...prev.quick_links];
-      const [moved] = links.splice(dragIdx, 1);
-      links.splice(idx, 0, moved);
-      setDragIdx(idx);
-      return { ...prev, quick_links: links };
+      const oldIdx = prev.quick_links.findIndex((_, i) => `link-${i}` === active.id);
+      const newIdx = prev.quick_links.findIndex((_, i) => `link-${i}` === over.id);
+      if (oldIdx === -1 || newIdx === -1) return prev;
+      return { ...prev, quick_links: arrayMove(prev.quick_links, oldIdx, newIdx) };
     });
   };
-  const handleDragEnd = () => setDragIdx(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSave(form);
+    initialRef.current = form;
+    onDirtyChange?.(false);
   };
 
   return (
@@ -113,56 +227,37 @@ export default function FooterForm({
           )}
         </div>
 
-        {/* Quick Links dynamic editor */}
+        {/* Quick Links — dnd-kit sortable list */}
         <div className="field-group field-group--full">
           <div className="field-label">
             Quick Links
             <span className="field-hint">(drag to reorder)</span>
           </div>
 
-          <div className="quick-links-list" role="list">
-            {form.quick_links.map((link, idx) => (
-              <div
-                key={idx}
-                className={`quick-link-row${dragIdx === idx ? ' quick-link-row--dragging' : ''}`}
-                draggable
-                onDragStart={() => handleDragStart(idx)}
-                onDragOver={(e) => handleDragOver(e, idx)}
-                onDragEnd={handleDragEnd}
-                role="listitem"
-                aria-label={`Quick link ${idx + 1}`}
-              >
-                <span className="drag-handle" aria-hidden="true">⠿</span>
-
-                <input
-                  type="text"
-                  className={`field-input field-input--sm${fieldErrors[`quick_links.${idx}.label`] ? ' field-input--error' : ''}`}
-                  value={link.label}
-                  onChange={(e) => updateLink(idx, 'label', e.target.value)}
-                  placeholder="Label (e.g. Portfolio)"
-                  aria-label={`Quick link ${idx + 1} label`}
-                />
-
-                <input
-                  type="text"
-                  className={`field-input field-input--sm${fieldErrors[`quick_links.${idx}.href`] ? ' field-input--error' : ''}`}
-                  value={link.href}
-                  onChange={(e) => updateLink(idx, 'href', e.target.value)}
-                  placeholder="URL (e.g. /portfolio)"
-                  aria-label={`Quick link ${idx + 1} URL`}
-                />
-
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-danger-text btn-icon"
-                  onClick={() => removeLink(idx)}
-                  aria-label={`Remove quick link ${idx + 1}`}
-                >
-                  ✕
-                </button>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={form.quick_links.map((_, i) => `link-${i}`)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="quick-links-list" role="list">
+                {form.quick_links.map((link, idx) => (
+                  <SortableRow
+                    key={`link-${idx}`}
+                    id={`link-${idx}`}
+                    idx={idx}
+                    link={link}
+                    fieldErrors={fieldErrors}
+                    onUpdate={updateLink}
+                    onRemove={removeLink}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
 
           {fieldErrors.quick_links && (
             <p className="field-error">{fieldErrors.quick_links}</p>

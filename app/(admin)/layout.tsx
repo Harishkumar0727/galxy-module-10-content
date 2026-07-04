@@ -5,6 +5,10 @@
  * - Dark theme only (no light mode toggle — brand-wide rule)
  * - Auth guard: redirects unauthenticated users to /login
  *
+ * Fix 4b: Reads the admin_session cookie value and passes the raw JWT token
+ *         down to client components via SessionProvider, so components such
+ *         as MediaUploadField can attach Authorization headers to API calls.
+ *
  * NOTE: If Module 12 (admin dashboard) has already set up the admin
  * auth-gated layout, REPLACE this with their layout — confirm with that TL
  * rather than maintaining two separate admin layouts.
@@ -15,6 +19,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
+import { SessionProvider } from '@/lib/context/SessionContext';
 import './admin.css';
 
 export const metadata: Metadata = {
@@ -24,13 +29,14 @@ export const metadata: Metadata = {
 };
 
 /**
- * Minimal auth check — reads the admin session cookie set by Module 1.
- * TODO: Replace with Module 1's actual session validation endpoint once available.
+ * Reads the admin_session cookie set by Module 1's auth middleware.
+ * Returns the raw cookie value (JWT string) so it can be forwarded
+ * to client components via SessionProvider.
  */
-async function checkAdminSession(): Promise<boolean> {
+async function getAdminToken(): Promise<string | null> {
   const cookieStore = await cookies();
   const session = cookieStore.get('admin_session');
-  return !!session?.value;
+  return session?.value ?? null;
 }
 
 export default async function AdminLayout({
@@ -38,36 +44,41 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const isAuthenticated = await checkAdminSession();
-  if (!isAuthenticated) {
-    redirect('/login?redirect=/admin/site-content');
+  const token = await getAdminToken();
+
+  if (!token) {
+    redirect('/login?redirect=/site-content');
   }
 
   return (
-    <div className="admin-shell">
-      {/* Admin top bar */}
-      <header className="admin-topbar">
-        <div className="admin-topbar-inner">
-          <span className="admin-logo">
-            <span className="admin-logo-mark">✦</span>
-            GALXY Admin
-          </span>
-          <nav className="admin-nav" aria-label="Admin navigation">
-            <a href="/admin/site-content" className="admin-nav-link">
-              Site Content
-            </a>
-            {/* Other admin module links added by Module 12 */}
-          </nav>
-          <div className="admin-topbar-end">
-            <span className="admin-badge">Admin</span>
+    /* Fix 4b: Wrap children in SessionProvider so client components can
+       call useSessionToken() to get the JWT for Authorization headers. */
+    <SessionProvider token={token}>
+      <div className="admin-shell">
+        {/* Admin top bar */}
+        <header className="admin-topbar">
+          <div className="admin-topbar-inner">
+            <span className="admin-logo">
+              <span className="admin-logo-mark">✦</span>
+              GALXY Admin
+            </span>
+            <nav className="admin-nav" aria-label="Admin navigation">
+              <a href="/site-content" className="admin-nav-link">
+                Site Content
+              </a>
+              {/* Other admin module links added by Module 12 */}
+            </nav>
+            <div className="admin-topbar-end">
+              <span className="admin-badge">Admin</span>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main content area */}
-      <main className="admin-main">
-        {children}
-      </main>
-    </div>
+        {/* Main content area */}
+        <main className="admin-main">
+          {children}
+        </main>
+      </div>
+    </SessionProvider>
   );
 }
