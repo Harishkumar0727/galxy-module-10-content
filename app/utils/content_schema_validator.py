@@ -60,10 +60,13 @@ EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 PHONE_REGEX = re.compile(r"^\+?[0-9\s\-()]{7,25}$")
 
 def is_valid_url(url_string):
-    """Helper to validate if a string is a valid HTTP/HTTPS URL."""
+    """Helper to validate if a string is a valid HTTP/HTTPS URL or root-relative path."""
     if not isinstance(url_string, str):
         return False
-    # Quick visual and parse verification
+    # Allow root-relative paths (e.g. /shop, /products/lighting)
+    if url_string.startswith("/"):
+        return True
+    # Quick visual and parse verification for absolute URLs
     if not (url_string.startswith("http://") or url_string.startswith("https://")):
         return False
     try:
