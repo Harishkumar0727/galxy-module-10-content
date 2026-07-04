@@ -63,20 +63,10 @@ class Database:
 
     @classmethod
     def init_db(cls):
-        """Initialize collections and constraints."""
-        db = cls.get_db()
+        """Initialize database constraints."""
         logger.info("Initializing database constraints...")
-        
-        # Section 3.1: site_content collection
-        # "One document per section. section is unique — enforce with a unique index."
-        site_content = db['site_content']
-        from pymongo import ASCENDING
-        site_content.create_index(
-            [("section", ASCENDING)],
-            unique=True,
-            name="unique_section_constraint"
-        )
-        logger.info("Index unique_section_constraint created/verified on site_content.")
+        from app.models.site_content import ensure_indexes
+        ensure_indexes()
 
 def get_db():
     return Database.get_db()

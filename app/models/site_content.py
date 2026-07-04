@@ -1,6 +1,5 @@
 import logging
 from pymongo import ASCENDING
-from app.db import Database
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +16,7 @@ logger = logging.getLogger(__name__)
 def ensure_indexes():
     """Ensures unique index constraint on the section field in the site_content collection."""
     try:
+        from app.db import Database
         db = Database.get_db()
         db['site_content'].create_index(
             [("section", ASCENDING)],
