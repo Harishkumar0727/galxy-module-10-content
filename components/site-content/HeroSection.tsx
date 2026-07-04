@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { HeroContent } from '@/lib/types/site-content';
 
 interface HeroSectionProps {
@@ -6,6 +8,17 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ hero }: HeroSectionProps) {
+  const [isMobile, setIsMobile] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   if (!hero) return null;
 
   return (
@@ -30,43 +43,24 @@ export default function HeroSection({ hero }: HeroSectionProps) {
         height: '100%',
         zIndex: 1,
       }}>
-        {hero.background_video_url ? (
-          <>
-            {/* Desktop Background Video */}
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="hero-video-desktop"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                opacity: 0.35,
-              }}
-            >
-              <source src={hero.background_video_url} type="video/mp4" />
-            </video>
-            
-            {/* Mobile Fallback Image / Glow Container */}
-            <div
-              className="hero-bg-mobile"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundImage: `radial-gradient(circle at center, rgba(88, 86, 214, 0.2) 0%, transparent 60%), url(${hero.background_image_url})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                opacity: 0.3,
-                display: 'none', // Managed via CSS styles in styles/media queries
-              }}
-            />
-          </>
+        {!isMobile && hero.background_video_url ? (
+          /* Desktop Background Video */
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              opacity: 0.35,
+            }}
+          >
+            <source src={hero.background_video_url} type="video/mp4" />
+          </video>
         ) : (
+          /* Mobile Background Image (Static image only for performance/battery) */
           <div
             style={{
               width: '100%',
@@ -79,18 +73,6 @@ export default function HeroSection({ hero }: HeroSectionProps) {
           />
         )}
       </div>
-
-      {/* Styled inline style block to handle responsive media show/hide clean */}
-      <style jsx global>{`
-        @media (max-width: 768px) {
-          .hero-video-desktop {
-            display: none !important;
-          }
-          .hero-bg-mobile {
-            display: block !important;
-          }
-        }
-      `}</style>
 
       {/* Grain / Noise Overlay */}
       <div className="grain-overlay"></div>
@@ -143,3 +125,4 @@ export default function HeroSection({ hero }: HeroSectionProps) {
     </section>
   );
 }
+

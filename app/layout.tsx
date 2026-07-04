@@ -3,12 +3,28 @@ import React from 'react';
 import Link from 'next/link';
 import Footer from '@/components/site-content/Footer';
 import StickyContact from '@/components/site-content/StickyContact';
-import { getBulkSections } from '@/lib/api/site-content';
+import { getBulkSections, getSection } from '@/lib/api/site-content';
+import { SeoHomeContent } from '@/lib/types/site-content';
+import { Metadata } from 'next';
 
-export const metadata = {
-  title: 'GALXY | Custom Lighting & Craft Studio',
-  description: 'Handcrafted custom neon lights, aesthetic signs, and custom craft lighting designs.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const seo = await getSection<SeoHomeContent>('seo_home');
+    return {
+      title: seo?.meta_title || '',
+      description: seo?.meta_description || '',
+      openGraph: {
+        title: seo?.meta_title || '',
+        description: seo?.meta_description || '',
+        images: seo?.og_image ? [{ url: seo.og_image }] : [],
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching global metadata:', error);
+    return {}; // No hardcoded fallback copy
+  }
+}
+
 
 export default async function RootLayout({
   children,

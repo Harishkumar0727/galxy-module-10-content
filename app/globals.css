@@ -122,9 +122,9 @@ html, body {
   .power-on-flicker {
     animation: none !important;
     opacity: 1 !important;
-    text-shadow: 0 0 15px rgba(88, 86, 214, 0.4) !important;
+    text-shadow: none !important;
   }
-  .reveal-on-scroll {
+  .reveal-item {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
@@ -133,6 +133,7 @@ html, body {
     scroll-behavior: auto !important;
   }
 }
+
 
 /* Gradient Borders on Hover (pink -> blue -> violet) */
 .gradient-border-btn {

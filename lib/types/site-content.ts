@@ -40,3 +40,13 @@ export interface SocialLinksContent {
   facebook: string | null;
   youtube: string | null;
 }
+
+export interface BulkSiteContent {
+  hero?: HeroContent;
+  about?: AboutContent;
+  footer?: FooterContent;
+  contact?: ContactContent;
+  seo_home?: SeoHomeContent;
+  social_links?: SocialLinksContent;
+}
+
