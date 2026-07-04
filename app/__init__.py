@@ -33,10 +33,19 @@ def create_app():
     # Enable CORS headers
     @app.after_request
     def add_cors_headers(response):
-        # NOTE: CORS origins are dynamically configured via app.config (F4).
-        # Fallback defaults to '*' for local integration/staging.
-        allowed_origins = app.config.get('CORS_ALLOWED_ORIGINS', '*')
-        response.headers['Access-Control-Allow-Origin'] = allowed_origins
+        # NOTE: CORS wildcard '*' is used for local integration and staging. 
+        # For production, specify allowed origins separated by commas in CORS_ALLOWED_ORIGINS.
+        from flask import request
+        origin = request.headers.get('Origin')
+        if origin:
+            allowed_origins_raw = app.config.get('CORS_ALLOWED_ORIGINS', '*')
+            if allowed_origins_raw == '*':
+                response.headers['Access-Control-Allow-Origin'] = '*'
+            else:
+                allowed_origins = [o.strip() for o in allowed_origins_raw.split(',') if o.strip()]
+                if origin in allowed_origins:
+                    response.headers['Access-Control-Allow-Origin'] = origin
+                    response.headers['Vary'] = 'Origin'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
         response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
         return response
