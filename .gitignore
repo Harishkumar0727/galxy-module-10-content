@@ -1,7 +1,10 @@
 # Environment files
 .env
 .env.local
-.env.*
+.env.development
+.env.production
+.env.staging
+!.env.example
 
 # Python files
 __pycache__/

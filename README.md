@@ -44,12 +44,12 @@ MONGO_URI=mongodb+srv://<username>:<password>@<cluster-address>/?appName=galxy-c
 MONGO_DB_NAME=galxy
 
 # Cloudinary Configuration (Only stored; uploader belongs to Member 2)
-CLOUDINARY_CLOUD_NAME=cipbjrym
-CLOUDINARY_API_KEY=737955365221973
-CLOUDINARY_API_SECRET=N7h3GSihVTUyqG62UkzFFI1vp7k
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 
 # JWT secret (from Module 1 for admin authentication verification)
-JWT_SECRET=super_secret_jwt_key_for_galxy_cms
+JWT_SECRET=your_jwt_secret_key_here
 ```
 
 *Note: Make sure your public outbound IP is whitelisted on the MongoDB Atlas Console (or configured to allow access from anywhere `0.0.0.0/0` during development).*
