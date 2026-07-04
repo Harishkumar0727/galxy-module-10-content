@@ -270,6 +270,7 @@ def test_get_bulk_success(client):
         "updated_by": "seed"
     })
     
+    # 1. Test clean valid bulk GET
     response = client.get('/api/site-content?sections=hero,footer')
     assert response.status_code == 200
     data = response.get_json()
@@ -278,6 +279,15 @@ def test_get_bulk_success(client):
     assert "footer" in data["data"]
     assert data["data"]["hero"]["headline"] == "H"
     assert data["data"]["footer"]["tagline"] == "F"
+
+    # 2. Test mixed valid + invalid bulk GET (F3: must silently drop invalid and return 200)
+    response_mixed = client.get('/api/site-content?sections=hero,bogus_sec')
+    assert response_mixed.status_code == 200
+    data_mixed = response_mixed.get_json()
+    assert data_mixed["success"] is True
+    assert "hero" in data_mixed["data"]
+    assert "bogus_sec" not in data_mixed["data"]
+    assert data_mixed["data"]["hero"]["headline"] == "H"
 
 
 # ==========================================

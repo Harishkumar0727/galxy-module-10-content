@@ -23,17 +23,16 @@ def get_bulk_sections():
 
     sections_list = [s.strip() for s in sections_param.split(',') if s.strip()]
     
-    # Validate sections
-    invalid_sections = [s for s in sections_list if s not in SECTION_ENUM]
-    if invalid_sections:
+    # Filter only valid sections, silently dropping invalid/unknown ones (F3)
+    valid_sections = [s for s in sections_list if s in SECTION_ENUM]
+    if not valid_sections:
         return jsonify({
-            "success": False,
-            "data": None,
-            "message": f"Invalid section(s) requested: {', '.join(invalid_sections)}. Allowed: {', '.join(SECTION_ENUM)}"
-        }), 400
+            "success": True,
+            "data": {}
+        }), 200
 
     try:
-        bulk_data = site_content_service.get_bulk(sections_list)
+        bulk_data = site_content_service.get_bulk(valid_sections)
         return jsonify({
             "success": True,
             "data": bulk_data
