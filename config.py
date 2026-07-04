@@ -20,3 +20,6 @@ class Config:
     
     # JWT Secret for require_admin decorator
     JWT_SECRET = os.environ.get('JWT_SECRET', 'super_secret_jwt_key_for_galxy_cms')
+
+    # CORS Configuration
+    CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '*')

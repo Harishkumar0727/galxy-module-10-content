@@ -33,9 +33,10 @@ def create_app():
     # Enable CORS headers
     @app.after_request
     def add_cors_headers(response):
-        # NOTE: CORS wildcard '*' is used for local integration and staging. 
-        # Tighten to specific frontend origin(s) before production deployment (F4).
-        response.headers['Access-Control-Allow-Origin'] = '*'
+        # NOTE: CORS origins are dynamically configured via app.config (F4).
+        # Fallback defaults to '*' for local integration/staging.
+        allowed_origins = app.config.get('CORS_ALLOWED_ORIGINS', '*')
+        response.headers['Access-Control-Allow-Origin'] = allowed_origins
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
         response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
         return response
