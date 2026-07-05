@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { ContactContent } from '@/lib/types/site-content';
+import { formatWhatsAppLink } from '@/lib/api/site-content';
 
 interface ContactSectionProps {
   contact: ContactContent;
@@ -120,7 +121,7 @@ export default function ContactSection({ contact }: ContactSectionProps) {
                 </div>
                 <div>
                   <h4 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.25rem' }}>WhatsApp</h4>
-                  <a href={`https://wa.me/${contact.whatsapp_number.replace(/[^\d]/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-primary)', fontSize: '1.1rem', textDecoration: 'none', transition: 'var(--transition-smooth)' }} className="footer-link">
+                  <a href={formatWhatsAppLink(contact.whatsapp_number)} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-primary)', fontSize: '1.1rem', textDecoration: 'none', transition: 'var(--transition-smooth)' }} className="footer-link">
                     {contact.whatsapp_number}
                   </a>
                 </div>

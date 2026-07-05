@@ -37,3 +37,10 @@ export async function getBulkSections(sections: string[]): Promise<BulkSiteConte
   return json.data as BulkSiteContent;
 }
 
+export function formatWhatsAppLink(whatsappNumber: string | null | undefined): string {
+  if (!whatsappNumber) return '';
+  const clean = whatsappNumber.replace(/[^\d]/g, '');
+  return `https://wa.me/${clean}`;
+}
+
+

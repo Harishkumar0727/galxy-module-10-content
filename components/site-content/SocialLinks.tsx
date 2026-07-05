@@ -2,7 +2,7 @@ import React from 'react';
 import { SocialLinksContent } from '@/lib/types/site-content';
 
 interface SocialLinksProps {
-  socialLinks: SocialLinksContent;
+  socialLinks: SocialLinksContent | null | undefined;
 }
 
 export default function SocialLinks({ socialLinks }: SocialLinksProps) {

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { AboutContent } from '@/lib/types/site-content';
+import Image from 'next/image';
 
 interface AboutSectionProps {
   about: AboutContent;
@@ -99,12 +100,12 @@ export default function AboutSection({ about }: AboutSectionProps) {
               maxWidth: '400px',
             }}>
               {about.founder_photo && (
-                <img
+                <Image
                   src={about.founder_photo}
                   alt={about.founder_name}
+                  width={60}
+                  height={60}
                   style={{
-                    width: '60px',
-                    height: '60px',
                     borderRadius: '50%',
                     objectFit: 'cover',
                     border: '2px solid var(--color-pink)',
@@ -156,12 +157,12 @@ export default function AboutSection({ about }: AboutSectionProps) {
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
                 }}
               >
-                <img
+                <Image
                   src={imgUrl}
                   alt={`Gallery image ${index + 1}`}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
                   style={{
-                    width: '100%',
-                    height: '100%',
                     objectFit: 'cover',
                     transition: 'transform 0.6s ease',
                   }}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatWhatsAppLink } from '@/lib/api/site-content';
 
 interface StickyContactProps {
   whatsappNumber: string;
@@ -6,9 +7,7 @@ interface StickyContactProps {
 }
 
 export default function StickyContact({ whatsappNumber, instagramUrl }: StickyContactProps) {
-  // Format WhatsApp number to clean digits if needed
-  const cleanNumber = whatsappNumber ? whatsappNumber.replace(/[^\d+]/g, '') : '';
-  const waUrl = cleanNumber ? `https://wa.me/${cleanNumber.startsWith('+') ? cleanNumber.slice(1) : cleanNumber}` : '';
+  const waUrl = formatWhatsAppLink(whatsappNumber);
 
   return (
     <div className="sticky-contact-bar">

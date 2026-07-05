@@ -5,7 +5,7 @@ import SocialLinks from './SocialLinks';
 
 interface FooterProps {
   footer: FooterContent;
-  socialLinks: SocialLinksContent;
+  socialLinks: SocialLinksContent | null | undefined;
 }
 
 export default function Footer({ footer, socialLinks }: FooterProps) {
@@ -111,7 +111,7 @@ export default function Footer({ footer, socialLinks }: FooterProps) {
             padding: '1rem 1.25rem',
             display: 'inline-block'
           }}>
-            {footer.business_hours.split('\n').map((line, idx) => (
+            {(footer.business_hours?.split('\n') || []).map((line, idx) => (
               <p key={idx} style={{ margin: '0.2rem 0' }}>{line}</p>
             ))}
           </div>
@@ -133,11 +133,6 @@ export default function Footer({ footer, socialLinks }: FooterProps) {
         color: 'var(--text-muted)'
       }}>
         <p>&copy; {new Date().getFullYear()} GALXY Studio. All rights reserved.</p>
-        <p style={{ display: 'flex', gap: '1rem' }}>
-          <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
-          <span>&middot;</span>
-          <span style={{ cursor: 'pointer' }}>Terms of Service</span>
-        </p>
       </div>
     </footer>
   );
