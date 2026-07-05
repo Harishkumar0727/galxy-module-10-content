@@ -67,15 +67,7 @@ export default function ContactSection({ contact }: ContactSectionProps) {
             justifyContent: 'center',
           }}
         >
-          <h2 style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(2rem, 4vw, 2.75rem)',
-            fontWeight: 700,
-            marginBottom: '2rem',
-            color: 'var(--text-primary)',
-          }}>
-            Get In Touch
-          </h2>
+
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {/* Phone */}

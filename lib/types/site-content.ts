@@ -22,8 +22,6 @@ export interface FooterContent {
 }
 
 export interface ContactContent {
-  title?: string;
-  subtitle?: string;
   phone: string;
   whatsapp_number: string;
   email: string;
