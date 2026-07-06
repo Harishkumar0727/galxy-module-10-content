@@ -1,52 +1,28 @@
-export interface HeroContent {
-  headline: string;
-  subheadline: string;
-  background_video_url: string | null;
-  background_image_url: string;
-  cta_text: string;
-  cta_link: string;
-}
+/**
+ * lib/types/site-content.ts
+ *
+ * Barrel re-export for all site-content type definitions.
+ *
+ * TYPE OWNERSHIP: Member 3 (Barkavi — M-10C) owns these interfaces.
+ * This file is a TEMPORARY local re-export until Barkavi's branch
+ * is merged into dev. Once merged, replace the line below with:
+ *
+ *   export type * from '@galxy/shared-types/site-content';
+ *
+ * No consuming code needs to change — all imports from '@/lib/types/site-content'
+ * continue to work identically.
+ *
+ * Audit §5.2: This local placeholder is acceptable because:
+ *   (a) It lives at the exact import path Member 3 will own.
+ *   (b) All consuming code (forms, API route, fetch wrapper) imports
+ *       from here, so a one-line swap is the only merge task.
+ *   (c) The interfaces are derived from Member 3's PRD and match her
+ *       schema exactly.
+ *
+ * DELETE _site-content-types.ts and uncomment the line below once
+ * @galxy/shared-types is available in node_modules:
+ *
+ *   export type * from '@galxy/shared-types/site-content';
+ */
 
-export interface AboutContent {
-  title: string;
-  body_text: string;
-  images: string[];
-  founder_name: string;
-  founder_photo: string | null;
-}
-
-export interface FooterContent {
-  tagline: string;
-  quick_links: { label: string; url: string }[];
-  business_hours: string;
-}
-
-export interface ContactContent {
-  phone: string;
-  whatsapp_number: string;
-  email: string;
-  address: string;
-  map_embed_url: string | null;
-}
-
-export interface SeoHomeContent {
-  meta_title: string;
-  meta_description: string;
-  og_image: string | null;
-}
-
-export interface SocialLinksContent {
-  instagram: string;
-  facebook: string | null;
-  youtube: string | null;
-}
-
-export interface BulkSiteContent {
-  hero?: HeroContent;
-  about?: AboutContent;
-  footer?: FooterContent;
-  contact?: ContactContent;
-  seo_home?: SeoHomeContent;
-  social_links?: SocialLinksContent;
-}
-
+export type * from './_site-content-types';
