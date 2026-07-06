@@ -67,11 +67,13 @@ export default function SocialLinksForm({
 }: SocialLinksFormProps) {
   const [form, setForm] = useState<SocialLinksContent>(initialData);
   const initialRef = useRef(initialData);
+  const onDirtyChangeRef = useRef(onDirtyChange);
+  onDirtyChangeRef.current = onDirtyChange;
 
   useEffect(() => {
     const isDirty = JSON.stringify(form) !== JSON.stringify(initialRef.current);
-    onDirtyChange?.(isDirty);
-  }, [form, onDirtyChange]);
+    onDirtyChangeRef.current?.(isDirty);
+  }, [form]);
 
   const set = (key: keyof SocialLinksContent, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));

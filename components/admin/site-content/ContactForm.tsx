@@ -29,11 +29,13 @@ export default function ContactForm({
 }: ContactFormProps) {
   const [form, setForm] = useState<ContactContent>(initialData);
   const initialRef = useRef(initialData);
+  const onDirtyChangeRef = useRef(onDirtyChange);
+  onDirtyChangeRef.current = onDirtyChange;
 
   useEffect(() => {
     const isDirty = JSON.stringify(form) !== JSON.stringify(initialRef.current);
-    onDirtyChange?.(isDirty);
-  }, [form, onDirtyChange]);
+    onDirtyChangeRef.current?.(isDirty);
+  }, [form]);
 
   const set = <K extends keyof ContactContent>(key: K, value: ContactContent[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));

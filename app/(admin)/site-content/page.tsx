@@ -158,6 +158,14 @@ export default function SiteContentPage() {
     setFieldErrors({});
   }, [activeTab]);
 
+  // ── Stable onDirtyChange callbacks per tab ───────────────────────────────
+  const onHeroDirty = useCallback((isDirty: boolean) => handleDirtyChange('hero', isDirty), [handleDirtyChange]);
+  const onAboutDirty = useCallback((isDirty: boolean) => handleDirtyChange('about', isDirty), [handleDirtyChange]);
+  const onFooterDirty = useCallback((isDirty: boolean) => handleDirtyChange('footer', isDirty), [handleDirtyChange]);
+  const onContactDirty = useCallback((isDirty: boolean) => handleDirtyChange('contact', isDirty), [handleDirtyChange]);
+  const onSeoDirty = useCallback((isDirty: boolean) => handleDirtyChange('seo_home', isDirty), [handleDirtyChange]);
+  const onSocialDirty = useCallback((isDirty: boolean) => handleDirtyChange('social_links', isDirty), [handleDirtyChange]);
+
   // ── Current section data ──────────────────────────────────────────────────
   const currentData = sectionData[activeTab] ?? DEFAULTS[activeTab];
 
@@ -213,7 +221,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
-                onDirtyChange={(isDirty) => handleDirtyChange('hero', isDirty)}
+                onDirtyChange={onHeroDirty}
               />
             )}
             {activeTab === 'about' && (
@@ -222,7 +230,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
-                onDirtyChange={(isDirty) => handleDirtyChange('about', isDirty)}
+                onDirtyChange={onAboutDirty}
               />
             )}
             {activeTab === 'footer' && (
@@ -231,7 +239,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
-                onDirtyChange={(isDirty) => handleDirtyChange('footer', isDirty)}
+                onDirtyChange={onFooterDirty}
               />
             )}
             {activeTab === 'contact' && (
@@ -240,7 +248,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
-                onDirtyChange={(isDirty) => handleDirtyChange('contact', isDirty)}
+                onDirtyChange={onContactDirty}
               />
             )}
             {activeTab === 'seo_home' && (
@@ -249,7 +257,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
-                onDirtyChange={(isDirty) => handleDirtyChange('seo_home', isDirty)}
+                onDirtyChange={onSeoDirty}
               />
             )}
             {activeTab === 'social_links' && (
@@ -258,7 +266,7 @@ export default function SiteContentPage() {
                 onSave={(d) => handleSave(d)}
                 saving={saving}
                 fieldErrors={fieldErrors}
-                onDirtyChange={(isDirty) => handleDirtyChange('social_links', isDirty)}
+                onDirtyChange={onSocialDirty}
               />
             )}
           </>
