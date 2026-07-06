@@ -28,6 +28,7 @@ export default function ContactForm({
   onDirtyChange,
 }: ContactFormProps) {
   const [form, setForm] = useState<ContactContent>(initialData);
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const initialRef = useRef(initialData);
   const onDirtyChangeRef = useRef(onDirtyChange);
   useEffect(() => { onDirtyChangeRef.current = onDirtyChange; }, [onDirtyChange]);
@@ -37,15 +38,28 @@ export default function ContactForm({
     onDirtyChangeRef.current?.(isDirty);
   }, [form]);
 
-  const set = <K extends keyof ContactContent>(key: K, value: ContactContent[K]) =>
+  const set = <K extends keyof ContactContent>(key: K, value: ContactContent[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (localErrors[key]) setLocalErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
+  };
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!form.email.trim()) errs.email = 'Email is required.';
+    if (form.map_embed_url && !/^(https?:\/\/)/.test(form.map_embed_url)) errs.map_embed_url = 'Enter a valid URL (https://...).';
+    setLocalErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     await onSave(form);
     initialRef.current = form;
     onDirtyChange?.(false);
   };
+
+  const err = (key: string) => localErrors[key] || fieldErrors[key];
 
   return (
     <form className="cms-form" onSubmit={handleSubmit} noValidate>
@@ -59,12 +73,12 @@ export default function ContactForm({
           <input
             id="contact-email"
             type="email"
-            className={`field-input${fieldErrors.email ? ' field-input--error' : ''}`}
+            className={`field-input${err('email') ? ' field-input--error' : ''}`}
             value={form.email}
             onChange={(e) => set('email', e.target.value)}
             placeholder="e.g. hello@galxy.studio"
           />
-          {fieldErrors.email && <p className="field-error">{fieldErrors.email}</p>}
+          {err('email') && <p className="field-error">{err('email')}</p>}
         </div>
 
         {/* Phone */}
@@ -75,12 +89,12 @@ export default function ContactForm({
           <input
             id="contact-phone"
             type="tel"
-            className={`field-input${fieldErrors.phone ? ' field-input--error' : ''}`}
+            className={`field-input${err('phone') ? ' field-input--error' : ''}`}
             value={form.phone}
             onChange={(e) => set('phone', e.target.value)}
             placeholder="e.g. +91 98765 43210"
           />
-          {fieldErrors.phone && <p className="field-error">{fieldErrors.phone}</p>}
+          {err('phone') && <p className="field-error">{err('phone')}</p>}
         </div>
 
         {/* Address */}
@@ -90,13 +104,13 @@ export default function ContactForm({
           </label>
           <textarea
             id="contact-address"
-            className={`field-textarea${fieldErrors.address ? ' field-input--error' : ''}`}
+            className={`field-textarea${err('address') ? ' field-input--error' : ''}`}
             rows={3}
             value={form.address}
             onChange={(e) => set('address', e.target.value)}
             placeholder="e.g. 12 Light District, Chennai, Tamil Nadu 600001"
           />
-          {fieldErrors.address && <p className="field-error">{fieldErrors.address}</p>}
+          {err('address') && <p className="field-error">{err('address')}</p>}
         </div>
 
         {/* Map Embed URL */}
@@ -107,13 +121,13 @@ export default function ContactForm({
           <input
             id="contact-map"
             type="url"
-            className={`field-input${fieldErrors.map_embed_url ? ' field-input--error' : ''}`}
+            className={`field-input${err('map_embed_url') ? ' field-input--error' : ''}`}
             value={form.map_embed_url}
             onChange={(e) => set('map_embed_url', e.target.value)}
             placeholder="https://www.google.com/maps/embed?pb=…"
           />
-          {fieldErrors.map_embed_url && (
-            <p className="field-error">{fieldErrors.map_embed_url}</p>
+          {err('map_embed_url') && (
+            <p className="field-error">{err('map_embed_url')}</p>
           )}
           {form.map_embed_url && (
             <div className="map-preview">
@@ -138,14 +152,14 @@ export default function ContactForm({
           </label>
           <textarea
             id="contact-hours"
-            className={`field-textarea${fieldErrors.business_hours ? ' field-input--error' : ''}`}
+            className={`field-textarea${err('business_hours') ? ' field-input--error' : ''}`}
             rows={4}
             value={form.business_hours}
             onChange={(e) => set('business_hours', e.target.value)}
             placeholder={`Mon – Fri: 9am – 6pm\nSat: 10am – 4pm\nSun: Closed`}
           />
-          {fieldErrors.business_hours && (
-            <p className="field-error">{fieldErrors.business_hours}</p>
+          {err('business_hours') && (
+            <p className="field-error">{err('business_hours')}</p>
           )}
         </div>
 

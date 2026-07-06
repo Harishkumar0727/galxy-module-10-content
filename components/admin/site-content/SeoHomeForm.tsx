@@ -30,6 +30,7 @@ export default function SeoHomeForm({
   onDirtyChange,
 }: SeoHomeFormProps) {
   const [form, setForm] = useState<SeoHomeContent>(initialData);
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const initialRef = useRef(initialData);
   const onDirtyChangeRef = useRef(onDirtyChange);
   useEffect(() => { onDirtyChangeRef.current = onDirtyChange; }, [onDirtyChange]);
@@ -39,15 +40,29 @@ export default function SeoHomeForm({
     onDirtyChangeRef.current?.(isDirty);
   }, [form]);
 
-  const set = <K extends keyof SeoHomeContent>(key: K, value: SeoHomeContent[K]) =>
+  const set = <K extends keyof SeoHomeContent>(key: K, value: SeoHomeContent[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (localErrors[key]) setLocalErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
+  };
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!form.title.trim()) errs.title = 'Meta title is required.';
+    if (!form.description.trim()) errs.description = 'Meta description is required.';
+    if (form.canonical_url && !/^(https?:\/\/)/.test(form.canonical_url)) errs.canonical_url = 'Enter a valid URL (https://...).';
+    setLocalErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     await onSave(form);
     initialRef.current = form;
     onDirtyChange?.(false);
   };
+
+  const err = (key: string) => localErrors[key] || fieldErrors[key];
 
   // Character count helpers
   const titleLen = form.title.length;
@@ -67,7 +82,7 @@ export default function SeoHomeForm({
           <input
             id="seo-title"
             type="text"
-            className={`field-input${fieldErrors.title ? ' field-input--error' : ''}`}
+            className={`field-input${err('title') ? ' field-input--error' : ''}`}
             value={form.title}
             onChange={(e) => set('title', e.target.value)}
             placeholder="e.g. GALXY | Custom Lighting & Craft Studio"
@@ -76,7 +91,7 @@ export default function SeoHomeForm({
           <p className={`char-count${titleLen > 60 ? ' char-count--warn' : ''}`}>
             {titleLen}/70 characters {titleLen > 60 ? '⚠ Google typically shows ≤60' : ''}
           </p>
-          {fieldErrors.title && <p className="field-error">{fieldErrors.title}</p>}
+          {err('title') && <p className="field-error">{err('title')}</p>}
         </div>
 
         {/* Meta Description */}
@@ -86,7 +101,7 @@ export default function SeoHomeForm({
           </label>
           <textarea
             id="seo-description"
-            className={`field-textarea${fieldErrors.description ? ' field-input--error' : ''}`}
+            className={`field-textarea${err('description') ? ' field-input--error' : ''}`}
             rows={3}
             value={form.description}
             onChange={(e) => set('description', e.target.value)}
@@ -96,7 +111,7 @@ export default function SeoHomeForm({
           <p className={`char-count${descLen > 160 ? ' char-count--warn' : ''}`}>
             {descLen}/200 characters {descLen > 160 ? '⚠ Google typically shows ≤160' : ''}
           </p>
-          {fieldErrors.description && <p className="field-error">{fieldErrors.description}</p>}
+          {err('description') && <p className="field-error">{err('description')}</p>}
         </div>
 
         {/* OG Image */}
@@ -106,7 +121,7 @@ export default function SeoHomeForm({
             value={form.og_image}
             folder="galxy/site-content"
             onChange={(url) => set('og_image', url || null)}
-            error={fieldErrors.og_image}
+            error={err('og_image')}
           />
           <p className="field-hint">Recommended: 1200×630px JPG/PNG for social sharing previews.</p>
         </div>
@@ -119,7 +134,7 @@ export default function SeoHomeForm({
           <input
             id="seo-og-title"
             type="text"
-            className={`field-input${fieldErrors.og_title ? ' field-input--error' : ''}`}
+            className={`field-input${err('og_title') ? ' field-input--error' : ''}`}
             value={form.og_title}
             onChange={(e) => set('og_title', e.target.value)}
             placeholder="Social share title (defaults to page title if blank)"
@@ -128,7 +143,7 @@ export default function SeoHomeForm({
           <p className={`char-count${ogTitleLen > 60 ? ' char-count--warn' : ''}`}>
             {ogTitleLen}/95
           </p>
-          {fieldErrors.og_title && <p className="field-error">{fieldErrors.og_title}</p>}
+          {err('og_title') && <p className="field-error">{err('og_title')}</p>}
         </div>
 
         {/* OG Description */}
@@ -138,7 +153,7 @@ export default function SeoHomeForm({
           </label>
           <textarea
             id="seo-og-description"
-            className={`field-textarea${fieldErrors.og_description ? ' field-input--error' : ''}`}
+            className={`field-textarea${err('og_description') ? ' field-input--error' : ''}`}
             rows={3}
             value={form.og_description}
             onChange={(e) => set('og_description', e.target.value)}
@@ -148,8 +163,8 @@ export default function SeoHomeForm({
           <p className={`char-count${ogDescLen > 200 ? ' char-count--warn' : ''}`}>
             {ogDescLen}/300
           </p>
-          {fieldErrors.og_description && (
-            <p className="field-error">{fieldErrors.og_description}</p>
+          {err('og_description') && (
+            <p className="field-error">{err('og_description')}</p>
           )}
         </div>
 
@@ -161,13 +176,13 @@ export default function SeoHomeForm({
           <input
             id="seo-canonical"
             type="url"
-            className={`field-input${fieldErrors.canonical_url ? ' field-input--error' : ''}`}
+            className={`field-input${err('canonical_url') ? ' field-input--error' : ''}`}
             value={form.canonical_url}
             onChange={(e) => set('canonical_url', e.target.value)}
             placeholder="https://galxy.studio/"
           />
-          {fieldErrors.canonical_url && (
-            <p className="field-error">{fieldErrors.canonical_url}</p>
+          {err('canonical_url') && (
+            <p className="field-error">{err('canonical_url')}</p>
           )}
         </div>
 

@@ -66,6 +66,7 @@ export default function SocialLinksForm({
   onDirtyChange,
 }: SocialLinksFormProps) {
   const [form, setForm] = useState<SocialLinksContent>(initialData);
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const initialRef = useRef(initialData);
   const onDirtyChangeRef = useRef(onDirtyChange);
   useEffect(() => { onDirtyChangeRef.current = onDirtyChange; }, [onDirtyChange]);
@@ -75,15 +76,32 @@ export default function SocialLinksForm({
     onDirtyChangeRef.current?.(isDirty);
   }, [form]);
 
-  const set = (key: keyof SocialLinksContent, value: string) =>
+  const set = (key: keyof SocialLinksContent, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (localErrors[key]) setLocalErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
+  };
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    for (const { key, label } of SOCIAL_FIELDS) {
+      const val = form[key];
+      if (val && !/^(https?:\/\/)/.test(val)) {
+        errs[key] = `${label} URL must start with https://`;
+      }
+    }
+    setLocalErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     await onSave(form);
     initialRef.current = form;
     onDirtyChange?.(false);
   };
+
+  const err = (key: string) => localErrors[key] || fieldErrors[key];
 
   return (
     <form className="cms-form" onSubmit={handleSubmit} noValidate>
@@ -97,13 +115,13 @@ export default function SocialLinksForm({
             <input
               id={`social-${key}`}
               type="url"
-              className={`field-input${fieldErrors[key] ? ' field-input--error' : ''}`}
+              className={`field-input${err(key) ? ' field-input--error' : ''}`}
               value={form[key]}
               onChange={(e) => set(key, e.target.value)}
               placeholder={placeholder}
             />
-            {fieldErrors[key] && <p className="field-error">{fieldErrors[key]}</p>}
-            {form[key] && (
+            {err(key) && <p className="field-error">{err(key)}</p>}
+            {form[key] && !err(key) && (
               <a
                 href={form[key]}
                 target="_blank"

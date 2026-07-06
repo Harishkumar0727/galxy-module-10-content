@@ -34,12 +34,16 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+// Module-level counter for stable dnd-kit IDs across renders
+let _linkIdCounter = 0;
+
 // ─── Sortable quick-link row ──────────────────────────────────────────────────
 interface SortableRowProps {
   id: string;
   idx: number;
   link: QuickLink;
   fieldErrors: Record<string, string>;
+  localErrors: Record<string, string>;
   onUpdate: (idx: number, field: keyof QuickLink, value: string) => void;
   onRemove: (idx: number) => void;
 }
@@ -49,6 +53,7 @@ function SortableRow({
   idx,
   link,
   fieldErrors,
+  localErrors,
   onUpdate,
   onRemove,
 }: SortableRowProps) {
@@ -87,7 +92,7 @@ function SortableRow({
 
       <input
         type="text"
-        className={`field-input field-input--sm${fieldErrors[`quick_links.${idx}.label`] ? ' field-input--error' : ''}`}
+        className={`field-input field-input--sm${(fieldErrors[`quick_links.${idx}.label`] || localErrors[`quick_links.${idx}.label`]) ? ' field-input--error' : ''}`}
         value={link.label}
         onChange={(e) => onUpdate(idx, 'label', e.target.value)}
         placeholder="Label (e.g. Portfolio)"
@@ -96,7 +101,7 @@ function SortableRow({
 
       <input
         type="text"
-        className={`field-input field-input--sm${fieldErrors[`quick_links.${idx}.href`] ? ' field-input--error' : ''}`}
+        className={`field-input field-input--sm${(fieldErrors[`quick_links.${idx}.href`] || localErrors[`quick_links.${idx}.href`]) ? ' field-input--error' : ''}`}
         value={link.href}
         onChange={(e) => onUpdate(idx, 'href', e.target.value)}
         placeholder="URL (e.g. /portfolio)"
@@ -132,6 +137,7 @@ export default function FooterForm({
   onDirtyChange,
 }: FooterFormProps) {
   const [form, setForm] = useState<FooterContent>(initialData);
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const initialRef = useRef(initialData);
   const onDirtyChangeRef = useRef(onDirtyChange);
   useEffect(() => { onDirtyChangeRef.current = onDirtyChange; }, [onDirtyChange]);
@@ -142,21 +148,35 @@ export default function FooterForm({
     onDirtyChangeRef.current?.(isDirty);
   }, [form]);
 
-  const set = <K extends keyof FooterContent>(key: K, value: FooterContent[K]) =>
+  const set = <K extends keyof FooterContent>(key: K, value: FooterContent[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (localErrors[key]) setLocalErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
+  };
+
+  // ── Stable IDs for dnd-kit sortable rows ──────────────────────────────────
+  // Audit §5.3: use persistent unique IDs instead of array index so that
+  // React keys / dnd-kit ids remain stable across reorders, preventing
+  // input focus from jumping.
+  const [linkIds, setLinkIds] = useState<string[]>(() =>
+    initialData.quick_links.map(() => `ql-${_linkIdCounter++}`)
+  );
 
   // ── Quick-links helpers ────────────────────────────────────────────────────
-  const addLink = () =>
+  const addLink = () => {
     setForm((prev) => ({
       ...prev,
       quick_links: [...prev.quick_links, { label: '', href: '' }],
     }));
+    setLinkIds((prev) => [...prev, `ql-${_linkIdCounter++}`]);
+  };
 
-  const removeLink = (idx: number) =>
+  const removeLink = (idx: number) => {
     setForm((prev) => ({
       ...prev,
       quick_links: prev.quick_links.filter((_, i) => i !== idx),
     }));
+    setLinkIds((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const updateLink = (idx: number, field: keyof QuickLink, value: string) =>
     setForm((prev) => ({
@@ -177,19 +197,39 @@ export default function FooterForm({
     if (!over || active.id === over.id) return;
 
     setForm((prev) => {
-      const oldIdx = prev.quick_links.findIndex((_, i) => `link-${i}` === active.id);
-      const newIdx = prev.quick_links.findIndex((_, i) => `link-${i}` === over.id);
+      const oldIdx = linkIds.indexOf(String(active.id));
+      const newIdx = linkIds.indexOf(String(over.id));
       if (oldIdx === -1 || newIdx === -1) return prev;
       return { ...prev, quick_links: arrayMove(prev.quick_links, oldIdx, newIdx) };
     });
+    setLinkIds((prev) => {
+      const oldIdx = prev.indexOf(String(active.id));
+      const newIdx = prev.indexOf(String(over.id));
+      if (oldIdx === -1 || newIdx === -1) return prev;
+      return arrayMove(prev, oldIdx, newIdx);
+    });
+  };
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    form.quick_links.forEach((link, i) => {
+      if (link.href && !/^(https?:\/\/|\/)/.test(link.href)) {
+        errs[`quick_links.${i}.href`] = 'Enter a valid URL (https://... or /path).';
+      }
+    });
+    setLocalErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     await onSave(form);
     initialRef.current = form;
     onDirtyChange?.(false);
   };
+
+  const err = (key: string) => localErrors[key] || fieldErrors[key];
 
   return (
     <form className="cms-form" onSubmit={handleSubmit} noValidate>
@@ -203,12 +243,12 @@ export default function FooterForm({
           <input
             id="footer-tagline"
             type="text"
-            className={`field-input${fieldErrors.tagline ? ' field-input--error' : ''}`}
+            className={`field-input${err('tagline') ? ' field-input--error' : ''}`}
             value={form.tagline}
             onChange={(e) => set('tagline', e.target.value)}
             placeholder="e.g. Illuminating spaces, crafting memories."
           />
-          {fieldErrors.tagline && <p className="field-error">{fieldErrors.tagline}</p>}
+          {err('tagline') && <p className="field-error">{err('tagline')}</p>}
         </div>
 
         {/* Copyright */}
@@ -219,13 +259,13 @@ export default function FooterForm({
           <input
             id="footer-copyright"
             type="text"
-            className={`field-input${fieldErrors.copyright_text ? ' field-input--error' : ''}`}
+            className={`field-input${err('copyright_text') ? ' field-input--error' : ''}`}
             value={form.copyright_text}
             onChange={(e) => set('copyright_text', e.target.value)}
             placeholder="e.g. © 2026 GALXY. All rights reserved."
           />
-          {fieldErrors.copyright_text && (
-            <p className="field-error">{fieldErrors.copyright_text}</p>
+          {err('copyright_text') && (
+            <p className="field-error">{err('copyright_text')}</p>
           )}
         </div>
 
@@ -242,17 +282,18 @@ export default function FooterForm({
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={form.quick_links.map((_, i) => `link-${i}`)}
+              items={linkIds}
               strategy={verticalListSortingStrategy}
             >
               <div className="quick-links-list" role="list">
                 {form.quick_links.map((link, idx) => (
                   <SortableRow
-                    key={`link-${idx}`}
-                    id={`link-${idx}`}
+                    key={linkIds[idx]}
+                    id={linkIds[idx]}
                     idx={idx}
                     link={link}
                     fieldErrors={fieldErrors}
+                    localErrors={localErrors}
                     onUpdate={updateLink}
                     onRemove={removeLink}
                   />
@@ -261,8 +302,8 @@ export default function FooterForm({
             </SortableContext>
           </DndContext>
 
-          {fieldErrors.quick_links && (
-            <p className="field-error">{fieldErrors.quick_links}</p>
+          {err('quick_links') && (
+            <p className="field-error">{err('quick_links')}</p>
           )}
 
           <button type="button" className="btn btn-secondary btn-sm" onClick={addLink}>

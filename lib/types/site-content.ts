@@ -1,109 +1,28 @@
 /**
  * lib/types/site-content.ts
  *
- * Canonical type definitions for all 6 site-content sections.
+ * Barrel re-export for all site-content type definitions.
  *
  * TYPE OWNERSHIP: Member 3 (Barkavi — M-10C) owns these interfaces.
- * This file acts as the shared source of truth within this module until
- * Barkavi's branch is merged into dev. Once merged, REPLACE the contents
- * of this file with a barrel re-export from her package:
+ * This file is a TEMPORARY local re-export until Barkavi's branch
+ * is merged into dev. Once merged, replace the line below with:
  *
  *   export type * from '@galxy/shared-types/site-content';
  *
- * DO NOT redefine these types in any other file — always import from here.
+ * No consuming code needs to change — all imports from '@/lib/types/site-content'
+ * continue to work identically.
  *
- * Consumers:
- *   - Member 4 (Leelavathy — M-10D): Admin CMS forms (read-only)
- *   - Member 1 (Harishkumar): API route validation (read-only)
+ * Audit §5.2: This local placeholder is acceptable because:
+ *   (a) It lives at the exact import path Member 3 will own.
+ *   (b) All consuming code (forms, API route, fetch wrapper) imports
+ *       from here, so a one-line swap is the only merge task.
+ *   (c) The interfaces are derived from Member 3's PRD and match her
+ *       schema exactly.
+ *
+ * DELETE _site-content-types.ts and uncomment the line below once
+ * @galxy/shared-types is available in node_modules:
+ *
+ *   export type * from '@galxy/shared-types/site-content';
  */
 
-// ─── Hero Section ────────────────────────────────────────────────────────────
-export interface HeroContent {
-  title: string;
-  subtitle: string;
-  cta_text: string;
-  cta_link: string;
-  background_image: string | null;
-}
-
-// ─── About Section ───────────────────────────────────────────────────────────
-export interface AboutContent {
-  headline: string;
-  body: string;
-  images: string[];           // array of image URLs
-  founder_photo: string | null;
-  founder_name: string;
-  founder_title: string;
-}
-
-// ─── Footer Section ──────────────────────────────────────────────────────────
-export interface QuickLink {
-  label: string;
-  href: string;
-}
-
-export interface FooterContent {
-  tagline: string;
-  quick_links: QuickLink[];
-  copyright_text: string;
-}
-
-// ─── Contact Section ─────────────────────────────────────────────────────────
-export interface ContactContent {
-  email: string;
-  phone: string;
-  address: string;
-  map_embed_url: string;
-  business_hours: string;
-}
-
-// ─── SEO (Home) Section ──────────────────────────────────────────────────────
-export interface SeoHomeContent {
-  title: string;
-  description: string;
-  og_image: string | null;
-  og_title: string;
-  og_description: string;
-  canonical_url: string;
-}
-
-// ─── Social Links Section ────────────────────────────────────────────────────
-export interface SocialLinksContent {
-  instagram: string;
-  facebook: string;
-  youtube: string;
-  pinterest: string;
-  twitter: string;
-}
-
-// ─── Union type for all 6 sections ───────────────────────────────────────────
-export type SectionName =
-  | 'hero'
-  | 'about'
-  | 'footer'
-  | 'contact'
-  | 'seo_home'
-  | 'social_links';
-
-export type SectionContent =
-  | HeroContent
-  | AboutContent
-  | FooterContent
-  | ContactContent
-  | SeoHomeContent
-  | SocialLinksContent;
-
-// ─── API response envelope ────────────────────────────────────────────────────
-export interface SiteContentResponse<T extends SectionContent> {
-  success: boolean;
-  data: {
-    section: SectionName;
-    content: T;
-  };
-}
-
-export interface SiteContentErrorResponse {
-  success: false;
-  message: string;
-  errors: Record<string, string>; // { fieldName: "error reason" }
-}
+export type * from './_site-content-types';

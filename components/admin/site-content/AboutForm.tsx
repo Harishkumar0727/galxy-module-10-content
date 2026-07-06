@@ -30,6 +30,7 @@ export default function AboutForm({
   onDirtyChange,
 }: AboutFormProps) {
   const [form, setForm] = useState<AboutContent>(initialData);
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const initialRef = useRef(initialData);
   const onDirtyChangeRef = useRef(onDirtyChange);
   useEffect(() => { onDirtyChangeRef.current = onDirtyChange; }, [onDirtyChange]);
@@ -39,8 +40,10 @@ export default function AboutForm({
     onDirtyChangeRef.current?.(isDirty);
   }, [form]);
 
-  const set = <K extends keyof AboutContent>(key: K, value: AboutContent[K]) =>
+  const set = <K extends keyof AboutContent>(key: K, value: AboutContent[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (localErrors[key]) setLocalErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
+  };
 
   // Images array helpers
   const addImage = (url: string) =>
@@ -58,12 +61,23 @@ export default function AboutForm({
       images: prev.images.map((img, i) => (i === idx ? url : img)),
     }));
 
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!form.headline.trim()) errs.headline = 'Headline is required.';
+    if (!form.body.trim()) errs.body = 'Body text is required.';
+    setLocalErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     await onSave(form);
     initialRef.current = form;
     onDirtyChange?.(false);
   };
+
+  const err = (key: string) => localErrors[key] || fieldErrors[key];
 
   return (
     <form className="cms-form" onSubmit={handleSubmit} noValidate>
@@ -77,12 +91,12 @@ export default function AboutForm({
           <input
             id="about-headline"
             type="text"
-            className={`field-input${fieldErrors.headline ? ' field-input--error' : ''}`}
+            className={`field-input${err('headline') ? ' field-input--error' : ''}`}
             value={form.headline}
             onChange={(e) => set('headline', e.target.value)}
             placeholder="e.g. Our Story"
           />
-          {fieldErrors.headline && <p className="field-error">{fieldErrors.headline}</p>}
+          {err('headline') && <p className="field-error">{err('headline')}</p>}
         </div>
 
         {/* Body */}
@@ -92,13 +106,13 @@ export default function AboutForm({
           </label>
           <textarea
             id="about-body"
-            className={`field-textarea${fieldErrors.body ? ' field-input--error' : ''}`}
+            className={`field-textarea${err('body') ? ' field-input--error' : ''}`}
             rows={6}
             value={form.body}
             onChange={(e) => set('body', e.target.value)}
             placeholder="About paragraph displayed on the About page"
           />
-          {fieldErrors.body && <p className="field-error">{fieldErrors.body}</p>}
+          {err('body') && <p className="field-error">{err('body')}</p>}
         </div>
 
         {/* Gallery Images */}
@@ -112,7 +126,7 @@ export default function AboutForm({
                   value={imgUrl}
                   folder="galxy/site-content"
                   onChange={(url) => replaceImage(idx, url)}
-                  error={fieldErrors[`images.${idx}`]}
+                  error={err(`images.${idx}`)}
                 />
                 <button
                   type="button"
@@ -131,7 +145,7 @@ export default function AboutForm({
               onChange={(url) => { if (url) addImage(url); }}
             />
           </div>
-          {fieldErrors.images && <p className="field-error">{fieldErrors.images}</p>}
+          {err('images') && <p className="field-error">{err('images')}</p>}
         </div>
 
         {/* Founder Photo */}
@@ -141,7 +155,7 @@ export default function AboutForm({
             value={form.founder_photo}
             folder="galxy/site-content"
             onChange={(url) => set('founder_photo', url || null)}
-            error={fieldErrors.founder_photo}
+            error={err('founder_photo')}
           />
         </div>
 
@@ -153,12 +167,12 @@ export default function AboutForm({
           <input
             id="about-founder-name"
             type="text"
-            className={`field-input${fieldErrors.founder_name ? ' field-input--error' : ''}`}
+            className={`field-input${err('founder_name') ? ' field-input--error' : ''}`}
             value={form.founder_name}
             onChange={(e) => set('founder_name', e.target.value)}
             placeholder="e.g. Asil"
           />
-          {fieldErrors.founder_name && <p className="field-error">{fieldErrors.founder_name}</p>}
+          {err('founder_name') && <p className="field-error">{err('founder_name')}</p>}
         </div>
 
         {/* Founder Title */}
@@ -169,12 +183,12 @@ export default function AboutForm({
           <input
             id="about-founder-title"
             type="text"
-            className={`field-input${fieldErrors.founder_title ? ' field-input--error' : ''}`}
+            className={`field-input${err('founder_title') ? ' field-input--error' : ''}`}
             value={form.founder_title}
             onChange={(e) => set('founder_title', e.target.value)}
             placeholder="e.g. Creative Director & Founder"
           />
-          {fieldErrors.founder_title && <p className="field-error">{fieldErrors.founder_title}</p>}
+          {err('founder_title') && <p className="field-error">{err('founder_title')}</p>}
         </div>
 
       </div>

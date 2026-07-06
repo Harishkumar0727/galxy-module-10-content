@@ -8,8 +8,6 @@
  * Owned by: Member 4 (Leelavathy) — M-10D
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 /* ─── CSS Custom Properties ─────────────────────────────────────────────── */
 :root {
   /* Dark base palette */
@@ -58,7 +56,7 @@
   --topbar-h: 56px;
 
   /* Font */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* Transitions */
   --transition-fast:   150ms ease;

@@ -30,6 +30,7 @@ export default function HeroForm({
   onDirtyChange,
 }: HeroFormProps) {
   const [form, setForm] = useState<HeroContent>(initialData);
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const initialRef = useRef(initialData);
   const onDirtyChangeRef = useRef(onDirtyChange);
   useEffect(() => { onDirtyChangeRef.current = onDirtyChange; }, [onDirtyChange]);
@@ -40,16 +41,28 @@ export default function HeroForm({
     onDirtyChangeRef.current?.(isDirty);
   }, [form]);
 
-  const set = <K extends keyof HeroContent>(key: K, value: HeroContent[K]) =>
+  const set = <K extends keyof HeroContent>(key: K, value: HeroContent[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (localErrors[key]) setLocalErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
+  };
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!form.title.trim()) errs.title = 'Title is required.';
+    if (form.cta_link && !/^(https?:\/\/|\/)/.test(form.cta_link)) errs.cta_link = 'Enter a valid URL (e.g. https://... or /path).';
+    setLocalErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     await onSave(form);
-    // After save, update the ref so the form is no longer dirty
     initialRef.current = form;
     onDirtyChange?.(false);
   };
+
+  const err = (key: string) => localErrors[key] || fieldErrors[key];
 
   return (
     <form className="cms-form" onSubmit={handleSubmit} noValidate>
@@ -63,12 +76,12 @@ export default function HeroForm({
           <input
             id="hero-title"
             type="text"
-            className={`field-input${fieldErrors.title ? ' field-input--error' : ''}`}
+            className={`field-input${err('title') ? ' field-input--error' : ''}`}
             value={form.title}
             onChange={(e) => set('title', e.target.value)}
             placeholder="e.g. Custom Lighting & Craft Studio"
           />
-          {fieldErrors.title && <p className="field-error">{fieldErrors.title}</p>}
+          {err('title') && <p className="field-error">{err('title')}</p>}
         </div>
 
         {/* Subtitle */}
@@ -78,13 +91,13 @@ export default function HeroForm({
           </label>
           <textarea
             id="hero-subtitle"
-            className={`field-textarea${fieldErrors.subtitle ? ' field-input--error' : ''}`}
+            className={`field-textarea${err('subtitle') ? ' field-input--error' : ''}`}
             rows={3}
             value={form.subtitle}
             onChange={(e) => set('subtitle', e.target.value)}
             placeholder="Short tagline shown below the hero title"
           />
-          {fieldErrors.subtitle && <p className="field-error">{fieldErrors.subtitle}</p>}
+          {err('subtitle') && <p className="field-error">{err('subtitle')}</p>}
         </div>
 
         {/* CTA Text */}
@@ -95,12 +108,12 @@ export default function HeroForm({
           <input
             id="hero-cta-text"
             type="text"
-            className={`field-input${fieldErrors.cta_text ? ' field-input--error' : ''}`}
+            className={`field-input${err('cta_text') ? ' field-input--error' : ''}`}
             value={form.cta_text}
             onChange={(e) => set('cta_text', e.target.value)}
             placeholder="e.g. Explore Our Work"
           />
-          {fieldErrors.cta_text && <p className="field-error">{fieldErrors.cta_text}</p>}
+          {err('cta_text') && <p className="field-error">{err('cta_text')}</p>}
         </div>
 
         {/* CTA Link */}
@@ -111,12 +124,12 @@ export default function HeroForm({
           <input
             id="hero-cta-link"
             type="url"
-            className={`field-input${fieldErrors.cta_link ? ' field-input--error' : ''}`}
+            className={`field-input${err('cta_link') ? ' field-input--error' : ''}`}
             value={form.cta_link}
             onChange={(e) => set('cta_link', e.target.value)}
             placeholder="e.g. /portfolio"
           />
-          {fieldErrors.cta_link && <p className="field-error">{fieldErrors.cta_link}</p>}
+          {err('cta_link') && <p className="field-error">{err('cta_link')}</p>}
         </div>
 
         {/* Background Image */}
@@ -126,7 +139,7 @@ export default function HeroForm({
             value={form.background_image}
             folder="galxy/site-content"
             onChange={(url) => set('background_image', url || null)}
-            error={fieldErrors.background_image}
+            error={err('background_image')}
           />
         </div>
 

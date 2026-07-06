@@ -10,17 +10,15 @@
  *   POST /api/admin/media/upload
  *   multipart/form-data: { file, folder: "galxy/site-content" }
  *   200 → { data: { url: string } }
- *   400/413 → show inline error, preserve existing value
+ *   400/413 → show inline error, preserve existing value.
  *
- * Fix 4c: Reads JWT from SessionContext and attaches:
- *           Authorization: Bearer <token>
- *         to the upload request, satisfying Module 1 auth requirements.
+ * Auth headers are attached by Module 12's shared fetch wrapper
+ * (admin_session cookie is forwarded automatically by the browser).
  *
  * Owned by: Member 4 (Leelavathy) — M-10D
  */
 
 import React, { useRef, useState } from 'react';
-import { useSessionToken } from '@/lib/context/SessionContext';
 
 interface MediaUploadFieldProps {
   label: string;
@@ -41,9 +39,6 @@ export default function MediaUploadField({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Fix 4c: Get JWT from session context to attach as Authorization header
-  const token = useSessionToken();
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -56,16 +51,8 @@ export default function MediaUploadField({
       formData.append('file', file);
       formData.append('folder', folder);
 
-      // Build headers — always include Content-Type is NOT set for multipart
-      // (browser sets it automatically with boundary). Only add Authorization.
-      const headers: HeadersInit = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
       const res = await fetch('/api/admin/media/upload', {
         method: 'POST',
-        headers,
         body: formData,
       });
 
