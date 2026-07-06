@@ -32,7 +32,7 @@ export default function AboutForm({
   const [form, setForm] = useState<AboutContent>(initialData);
   const initialRef = useRef(initialData);
   const onDirtyChangeRef = useRef(onDirtyChange);
-  onDirtyChangeRef.current = onDirtyChange;
+  useEffect(() => { onDirtyChangeRef.current = onDirtyChange; }, [onDirtyChange]);
 
   useEffect(() => {
     const isDirty = JSON.stringify(form) !== JSON.stringify(initialRef.current);

@@ -134,7 +134,7 @@ export default function FooterForm({
   const [form, setForm] = useState<FooterContent>(initialData);
   const initialRef = useRef(initialData);
   const onDirtyChangeRef = useRef(onDirtyChange);
-  onDirtyChangeRef.current = onDirtyChange;
+  useEffect(() => { onDirtyChangeRef.current = onDirtyChange; }, [onDirtyChange]);
 
   // Fix 5: dirty tracking
   useEffect(() => {

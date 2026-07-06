@@ -92,19 +92,28 @@ export default function SiteContentPage() {
   useEffect(() => {
     if (sectionData[activeTab]) return; // already fetched — preserve form state
 
-    setLoading(true);
-    setFieldErrors({});
+    let cancelled = false;
 
-    fetchSectionContent(activeTab)
-      .then((data) => {
-        setSectionData((prev) => ({ ...prev, [activeTab]: data }));
-      })
-      .catch((err: Error) => {
-        addToast('error', `Failed to load ${activeTab}: ${err.message}`);
-        // Fall back to empty defaults so the form still renders
-        setSectionData((prev) => ({ ...prev, [activeTab]: DEFAULTS[activeTab] }));
-      })
-      .finally(() => setLoading(false));
+    (async () => {
+      setLoading(true);
+      setFieldErrors({});
+
+      try {
+        const data = await fetchSectionContent(activeTab);
+        if (!cancelled) setSectionData((prev) => ({ ...prev, [activeTab]: data }));
+      } catch (err: unknown) {
+        if (!cancelled) {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          addToast('error', `Failed to load ${activeTab}: ${message}`);
+          // Fall back to empty defaults so the form still renders
+          setSectionData((prev) => ({ ...prev, [activeTab]: DEFAULTS[activeTab] }));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [activeTab, sectionData, addToast]);
 
   // ── Dirty-state handler ───────────────────────────────────────────────────

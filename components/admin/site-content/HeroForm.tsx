@@ -32,7 +32,7 @@ export default function HeroForm({
   const [form, setForm] = useState<HeroContent>(initialData);
   const initialRef = useRef(initialData);
   const onDirtyChangeRef = useRef(onDirtyChange);
-  onDirtyChangeRef.current = onDirtyChange;
+  useEffect(() => { onDirtyChangeRef.current = onDirtyChange; }, [onDirtyChange]);
 
   // Fix 5: notify parent whenever dirty state changes
   useEffect(() => {

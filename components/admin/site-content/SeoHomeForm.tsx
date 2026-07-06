@@ -32,7 +32,7 @@ export default function SeoHomeForm({
   const [form, setForm] = useState<SeoHomeContent>(initialData);
   const initialRef = useRef(initialData);
   const onDirtyChangeRef = useRef(onDirtyChange);
-  onDirtyChangeRef.current = onDirtyChange;
+  useEffect(() => { onDirtyChangeRef.current = onDirtyChange; }, [onDirtyChange]);
 
   useEffect(() => {
     const isDirty = JSON.stringify(form) !== JSON.stringify(initialRef.current);
