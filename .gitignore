@@ -13,6 +13,15 @@ out/
 .env.production.local
 
 # Python files (backend)
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+!.env.example
+
+# Python files
 __pycache__/
 *.pyc
 *.pyo
@@ -27,3 +36,17 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+.venv/
+env/
+venv/
+ENV/
+
+# Testing
+.pytest_cache/
+
+# Node/Frontend (if any)
+node_modules/
+.next/
+
+# Logs
+*.log
