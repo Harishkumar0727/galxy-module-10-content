@@ -172,7 +172,7 @@ def validate_content(section, content):
                             url_val = link["url"]
                             if not isinstance(url_val, str):
                                 errors[f"quick_links[{idx}].url"] = f"Expected type str, got {type(url_val).__name__}."
-                            elif not is_valid_absolute_url(url_val):
+                            elif not is_valid_cta_link(url_val):
                                 errors[f"quick_links[{idx}].url"] = "Invalid URL format."
         elif path == "images" and "images" in content:
             imgs = content["images"]

@@ -35,8 +35,8 @@ DEFAULT_SEEDS = {
     "footer": {
         "tagline": "GALXY — Crafting Light from Dust",
         "quick_links": [
-            {"label": "Gallery", "url": "https://galxystudio.com/gallery"},
-            {"label": "Contact Us", "url": "https://galxystudio.com/contact"}
+            {"label": "About", "url": "/about"},
+            {"label": "Contact Us", "url": "/contact"}
         ],
         "business_hours": "Mon - Fri: 9:00 AM - 6:00 PM, Sat: 10:00 AM - 4:00 PM"
     },
