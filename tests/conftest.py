@@ -22,6 +22,9 @@ class TestConfig(Config):
 
 @pytest.fixture
 def app():
+    from app.db import Database
+    Database._client = None
+    Database._db = None
     app = create_app(TestConfig)
     return app
 

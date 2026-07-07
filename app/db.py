@@ -14,7 +14,11 @@ class Database:
     def get_client(cls):
         """Get or initialize the MongoClient instance."""
         if cls._client is None:
-            uri = Config.MONGO_URI
+            from flask import current_app, has_app_context
+            if has_app_context():
+                uri = current_app.config.get('MONGO_URI')
+            else:
+                uri = Config.MONGO_URI
             
             # Check if URI indicates a mock or if we are in testing
             if not uri or "mock" in uri.lower():
@@ -58,7 +62,12 @@ class Database:
         """Get the database instance."""
         if cls._db is None:
             client = cls.get_client()
-            cls._db = client[Config.MONGO_DB_NAME]
+            from flask import current_app, has_app_context
+            if has_app_context():
+                db_name = current_app.config.get('MONGO_DB_NAME', Config.MONGO_DB_NAME)
+            else:
+                db_name = Config.MONGO_DB_NAME
+            cls._db = client[db_name]
         return cls._db
 
     @classmethod

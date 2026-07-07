@@ -29,8 +29,12 @@ from app.middleware.auth import generate_admin_token
 
 @pytest.fixture
 def app():
-    # Initialize the app factory
-    app = create_app()
+    from tests.conftest import TestConfig
+    from app.db import Database
+    Database._client = None
+    Database._db = None
+    # Initialize the app factory with TestConfig to use mock DB
+    app = create_app(TestConfig)
     # Ensure indexes are run on startup
     Database.init_db()
     yield app

@@ -10,8 +10,6 @@
  * Auth guard is handled by Module 12's shared admin layout.
  * This layout provides only the admin shell (topbar, CSS) specific
  * to the Site Content module. Module 12's layout wraps this one.
- *
- * Owned by: Member 4 (Leelavathy) — M-10D
  */
 
 import type { Metadata } from 'next';

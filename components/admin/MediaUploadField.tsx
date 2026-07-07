@@ -6,7 +6,7 @@
  * Shared image-picker used by HeroForm (background_image),
  * AboutForm (images[], founder_photo), and SeoHomeForm (og_image).
  *
- * Calls Member 2 (Vishalini)'s endpoint:
+ * Calls the media upload endpoint:
  *   POST /api/admin/media/upload
  *   multipart/form-data: { file, folder: "galxy/site-content" }
  *   200 → { data: { url: string } }
@@ -14,8 +14,6 @@
  *
  * Auth headers are attached by Module 12's shared fetch wrapper
  * (admin_session cookie is forwarded automatically by the browser).
- *
- * Owned by: Member 4 (Leelavathy) — M-10D
  */
 
 import React, { useRef, useState } from 'react';

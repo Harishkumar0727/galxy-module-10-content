@@ -22,17 +22,18 @@ def create_app(config_class=Config):
         logger.warning("SECURITY WARNING: Using default hardcoded JWT_SECRET! Please configure JWT_SECRET in environment variables.")
 
     # Initialize MongoDB Collections & Indexes on startup
-    try:
-        Database.init_db()
-        import sys
-        if "pytest" not in sys.modules:
-            db = Database.get_db()
-            if Database._is_mock or db['site_content'].count_documents({}) == 0:
-                logger.info("Database is empty or running on mock. Auto-seeding default site content...")
-                from scripts.seed_site_content import seed_database
-                seed_database()
-    except Exception as e:
-        logger.error(f"Could not initialize database on startup: {e}")
+    with app.app_context():
+        try:
+            Database.init_db()
+            import sys
+            if "pytest" not in sys.modules:
+                db = Database.get_db()
+                if Database._is_mock or db['site_content'].count_documents({}) == 0:
+                    logger.info("Database is empty or running on mock. Auto-seeding default site content...")
+                    from scripts.seed_site_content import seed_database
+                    seed_database()
+        except Exception as e:
+            logger.error(f"Could not initialize database on startup: {e}")
 
     # Register blueprints
     app.register_blueprint(public_bp)
